@@ -5,8 +5,11 @@ const platform_fastify_1 = require("@nestjs/platform-fastify");
 const common_1 = require("@nestjs/common");
 const helmet_1 = require("@fastify/helmet");
 const config_1 = require("@nestjs/config");
+const sharp = require("sharp");
 const app_module_1 = require("./app.module");
 const swagger_1 = require("./swagger");
+sharp.cache(false);
+sharp.concurrency(1);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: false }));
     await app.register(helmet_1.default, {
