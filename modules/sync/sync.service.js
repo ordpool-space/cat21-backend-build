@@ -151,7 +151,7 @@ let SyncService = SyncService_1 = class SyncService {
 };
 exports.SyncService = SyncService;
 __decorate([
-    (0, schedule_1.Interval)(10_000),
+    (0, schedule_1.Interval)(60_000),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
