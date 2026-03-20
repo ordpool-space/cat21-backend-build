@@ -1,0 +1,14 @@
+import { DrizzleService } from '../shared/drizzle/drizzle.service';
+import { CatDto, CatsPaginatedResultDto, HealthDto, StatusDto } from './dto/cat.dto';
+export declare class CatsService {
+    private readonly drizzle;
+    private readonly startedAt;
+    constructor(drizzle: DrizzleService);
+    getHealth(): HealthDto;
+    getStatus(): Promise<StatusDto>;
+    getCatByNumber(catNumber: number): Promise<CatDto | null>;
+    getCatByTxHash(txHash: string): Promise<CatDto | null>;
+    getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
+    getCatSvg(catNumber: number): Promise<string | null>;
+    private mapToDto;
+}

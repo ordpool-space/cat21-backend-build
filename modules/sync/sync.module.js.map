@@ -1,0 +1,1 @@
+{"version":3,"file":"sync.module.js","sourceRoot":"","sources":["../../../src/modules/sync/sync.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAwC;AACxC,6DAAwD;AACxD,iDAA6C;AAMtC,IAAM,UAAU,GAAhB,MAAM,UAAU;CAAG,CAAA;AAAb,gCAAU;qBAAV,UAAU;IAJtB,IAAA,eAAM,EAAC;QACN,SAAS,EAAE,CAAC,qCAAgB,EAAE,0BAAW,CAAC;QAC1C,OAAO,EAAE,CAAC,qCAAgB,CAAC;KAC5B,CAAC;GACW,UAAU,CAAG"}

@@ -1,0 +1,46 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.cats = void 0;
+const pg_core_1 = require("drizzle-orm/pg-core");
+exports.cats = (0, pg_core_1.pgTable)('cats', {
+    id: (0, pg_core_1.uuid)('id').defaultRandom().primaryKey(),
+    catNumber: (0, pg_core_1.integer)('cat_number').notNull().unique(),
+    txHash: (0, pg_core_1.varchar)('tx_hash', { length: 64 }).notNull().unique(),
+    blockHash: (0, pg_core_1.varchar)('block_hash', { length: 64 }).notNull(),
+    blockHeight: (0, pg_core_1.integer)('block_height').notNull(),
+    mintedAt: (0, pg_core_1.timestamp)('minted_at', { withTimezone: true }).notNull(),
+    mintedBy: (0, pg_core_1.varchar)('minted_by', { length: 256 }),
+    fee: (0, pg_core_1.bigint)('fee', { mode: 'number' }).notNull(),
+    weight: (0, pg_core_1.integer)('weight').notNull(),
+    size: (0, pg_core_1.integer)('size').notNull(),
+    feeRate: (0, pg_core_1.doublePrecision)('feerate').notNull(),
+    sat: (0, pg_core_1.bigint)('sat', { mode: 'number' }).notNull(),
+    value: (0, pg_core_1.bigint)('value', { mode: 'number' }).notNull(),
+    category: (0, pg_core_1.varchar)('category', { length: 50 }).notNull().default(''),
+    genesis: (0, pg_core_1.boolean)('genesis').notNull().default(false),
+    catColors: (0, pg_core_1.text)('cat_colors').array().notNull().default([]),
+    male: (0, pg_core_1.boolean)('male').notNull().default(false),
+    female: (0, pg_core_1.boolean)('female').notNull().default(false),
+    designIndex: (0, pg_core_1.integer)('design_index').notNull().default(0),
+    designPose: (0, pg_core_1.varchar)('design_pose', { length: 50 }).notNull().default(''),
+    designExpression: (0, pg_core_1.varchar)('design_expression', { length: 50 }).notNull().default(''),
+    designPattern: (0, pg_core_1.varchar)('design_pattern', { length: 50 }).notNull().default(''),
+    designFacing: (0, pg_core_1.varchar)('design_facing', { length: 10 }).notNull().default(''),
+    laserEyes: (0, pg_core_1.varchar)('laser_eyes', { length: 50 }).notNull().default('None'),
+    background: (0, pg_core_1.varchar)('background', { length: 50 }).notNull().default(''),
+    backgroundColors: (0, pg_core_1.text)('background_colors').array().notNull().default([]),
+    crown: (0, pg_core_1.varchar)('crown', { length: 50 }).notNull().default('None'),
+    glasses: (0, pg_core_1.varchar)('glasses', { length: 50 }).notNull().default('None'),
+    glassesColors: (0, pg_core_1.text)('glasses_colors').array().notNull().default([]),
+}, (t) => [
+    (0, pg_core_1.index)('idx_cats_block_height').on(t.blockHeight),
+    (0, pg_core_1.index)('idx_cats_minted_by').on(t.mintedBy),
+    (0, pg_core_1.index)('idx_cats_genesis').on(t.genesis),
+    (0, pg_core_1.index)('idx_cats_design_pose').on(t.designPose),
+    (0, pg_core_1.index)('idx_cats_laser_eyes').on(t.laserEyes),
+    (0, pg_core_1.index)('idx_cats_background').on(t.background),
+    (0, pg_core_1.index)('idx_cats_crown').on(t.crown),
+    (0, pg_core_1.index)('idx_cats_glasses').on(t.glasses),
+    (0, pg_core_1.index)('idx_cats_feerate').on(t.feeRate),
+]);
+//# sourceMappingURL=cats.js.map
