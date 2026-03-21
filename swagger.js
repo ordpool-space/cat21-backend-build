@@ -9,6 +9,13 @@ function setupSwagger(app) {
         .setVersion('0.1.0')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('docs', app, document);
+    swagger_1.SwaggerModule.setup('docs', app, document, {
+        swaggerOptions: {
+            defaultModelsExpandDepth: -1,
+            defaultModelExpandDepth: 1,
+            docExpansion: 'list',
+            tryItOutEnabled: true,
+        },
+    });
 }
 //# sourceMappingURL=swagger.js.map
