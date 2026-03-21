@@ -7,8 +7,6 @@ function setupSwagger(app) {
         .setTitle('CAT-21 Backend')
         .setDescription('REST API for CAT-21 cat data with traits')
         .setVersion('0.1.0')
-        .addServer('http://localhost:3333', 'Development')
-        .addServer('https://backend.cat21.space', 'Production')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup('docs', app, document);

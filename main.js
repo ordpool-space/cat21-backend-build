@@ -14,15 +14,7 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: false }));
     await app.register(helmet_1.default, {
         crossOriginResourcePolicy: { policy: 'cross-origin' },
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", 'data:'],
-                connectSrc: ["'self'"],
-            },
-        },
+        contentSecurityPolicy: false,
     });
     app.enableCors();
     app.useGlobalPipes(new common_1.ValidationPipe({
