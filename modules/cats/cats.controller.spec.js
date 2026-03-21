@@ -45,7 +45,7 @@ describe('CatsController', () => {
             const reply = createMockReply();
             const result = await controller.getCatByNumber(0, reply);
             expect(result).toEqual(mockCat);
-            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=31536000, immutable');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
         });
         it('should throw NotFoundException for unknown cat', async () => {
             service.getCatByNumber.mockResolvedValue(null);
@@ -59,7 +59,7 @@ describe('CatsController', () => {
             const reply = createMockReply();
             const result = await controller.getCatByTxHash(mockCat.txHash, reply);
             expect(result).toEqual(mockCat);
-            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=31536000, immutable');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
         });
         it('should throw NotFoundException for unknown tx hash', async () => {
             service.getCatByTxHash.mockResolvedValue(null);
@@ -123,7 +123,7 @@ describe('CatsController', () => {
             await controller.getCatSvg(0, reply);
             expect(reply.header).toHaveBeenCalledWith('Content-Type', 'image/svg+xml');
             expect(reply.header).toHaveBeenCalledWith('Content-Disposition', 'inline; filename="cat21-0.svg"');
-            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=31536000, immutable');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
             expect(reply.send).toHaveBeenCalledWith('<svg>test</svg>');
         });
     });

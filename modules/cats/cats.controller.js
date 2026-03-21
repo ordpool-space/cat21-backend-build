@@ -19,7 +19,7 @@ const swagger_1 = require("@nestjs/swagger");
 const sharp = require("sharp");
 const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
-const IMMUTABLE = 'public, max-age=31536000, immutable';
+const CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
 let CatsController = class CatsController {
     constructor(catsService) {
         this.catsService = catsService;
@@ -33,29 +33,33 @@ let CatsController = class CatsController {
     async getCatByNumber(catNumber, reply) {
         const cat = await this.catsService.getCatByNumber(catNumber);
         if (!cat) {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
-        reply.header('Cache-Control', IMMUTABLE);
+        reply.header('Cache-Control', CACHE_CONTROL);
         return cat;
     }
     async getCatByTxHash(txHash, reply) {
         if (!/^[a-f0-9]{64}$/.test(txHash)) {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Invalid tx hash`);
         }
         const cat = await this.catsService.getCatByTxHash(txHash);
         if (!cat) {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat with tx ${txHash} not found`);
         }
-        reply.header('Cache-Control', IMMUTABLE);
+        reply.header('Cache-Control', CACHE_CONTROL);
         return cat;
     }
     async getCatSvg(catNumber, reply) {
         const svg = await this.catsService.getCatSvg(catNumber);
         if (!svg) {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
         return reply
-            .header('Cache-Control', IMMUTABLE)
+            .header('Cache-Control', CACHE_CONTROL)
             .header('Content-Type', 'image/svg+xml')
             .header('Content-Disposition', `inline; filename="cat21-${catNumber}.svg"`)
             .send(svg);
@@ -63,6 +67,7 @@ let CatsController = class CatsController {
     async getCatWebp(catNumber, reply) {
         const svg = await this.catsService.getCatSvg(catNumber);
         if (!svg) {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
         try {
@@ -71,12 +76,13 @@ let CatsController = class CatsController {
                 .webp({ lossless: true })
                 .toBuffer();
             return reply
-                .header('Cache-Control', IMMUTABLE)
+                .header('Cache-Control', CACHE_CONTROL)
                 .header('Content-Type', 'image/webp')
                 .header('Content-Disposition', `inline; filename="cat21-${catNumber}.webp"`)
                 .send(webp);
         }
         catch {
+            reply.header('Cache-Control', 'no-store');
             throw new common_1.InternalServerErrorException(`Failed to render image for cat #${catNumber}`);
         }
     }

@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const schedule_1 = require("@nestjs/schedule");
+const app_controller_1 = require("./app.controller");
 const env_config_1 = require("./env.config");
 const drizzle_module_1 = require("./modules/shared/drizzle/drizzle.module");
 const cats_module_1 = require("./modules/cats/cats.module");
@@ -26,6 +27,7 @@ exports.AppModule = AppModule = __decorate([
             cats_module_1.CatsModule,
             sync_module_1.SyncModule,
         ],
+        controllers: [app_controller_1.AppController],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map
