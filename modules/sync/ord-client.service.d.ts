@@ -2,7 +2,6 @@ import { ConfigService } from '@nestjs/config';
 export interface OrdCatDetail {
     id: string;
     number: number;
-    address: string | null;
     minted_by: string | null;
     sat: number;
     fee: number;

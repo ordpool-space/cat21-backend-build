@@ -72,6 +72,20 @@ let CatsService = class CatsService {
             itemsPerPage,
         };
     }
+    async getCatNumbers(itemsPerPage, currentPage) {
+        const offset = (currentPage - 1) * itemsPerPage;
+        const [totalQuery, results] = await Promise.all([
+            this.drizzle.db.select({ count: (0, drizzle_orm_1.count)() }).from(cats_1.cats),
+            this.drizzle.db.select({ catNumber: cats_1.cats.catNumber }).from(cats_1.cats).orderBy((0, drizzle_orm_1.desc)(cats_1.cats.catNumber)).limit(itemsPerPage).offset(offset),
+        ]);
+        const [totalResult] = totalQuery;
+        return {
+            catNumbers: results.map((r) => r.catNumber),
+            total: totalResult.count,
+            currentPage,
+            itemsPerPage,
+        };
+    }
     async getCatSvg(catNumber) {
         const [row] = await this.drizzle.db
             .select({

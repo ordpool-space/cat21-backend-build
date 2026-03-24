@@ -89,6 +89,9 @@ let CatsController = class CatsController {
     async getCats(itemsPerPage, currentPage) {
         return this.catsService.getCats(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
     }
+    async getCatNumbers(itemsPerPage, currentPage) {
+        return this.catsService.getCatNumbers(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
+    }
 };
 exports.CatsController = CatsController;
 __decorate([
@@ -165,7 +168,7 @@ __decorate([
 ], CatsController.prototype, "getCatWebp", null);
 __decorate([
     (0, common_1.Get)('cats/:itemsPerPage/:currentPage'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat list', description: 'Returns a paginated list of cats, sorted by newest first. Max 100 items per page.' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat list', description: 'Returns a paginated list of cats with all traits, sorted by newest first. Max 100 items per page. Use /api/cats/numbers/ for a lightweight alternative.' }),
     (0, swagger_1.ApiParam)({ name: 'itemsPerPage', description: 'Number of cats per page (max 100)', example: 48 }),
     (0, swagger_1.ApiParam)({ name: 'currentPage', description: 'Page number (1-based)', example: 1 }),
     (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.CatsPaginatedResultDto, description: 'Paginated list of cats with total count' }),
@@ -176,6 +179,19 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], CatsController.prototype, "getCats", null);
+__decorate([
+    (0, common_1.Get)('cats/numbers/:itemsPerPage/:currentPage'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat numbers', description: 'Returns only cat numbers (no traits), sorted by newest first. Max 100 items per page. Ideal for gallery views where only thumbnails are needed.' }),
+    (0, swagger_1.ApiParam)({ name: 'itemsPerPage', description: 'Number of cats per page (max 100)', example: 48 }),
+    (0, swagger_1.ApiParam)({ name: 'currentPage', description: 'Page number (1-based)', example: 1 }),
+    (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.CatNumbersPaginatedResultDto, description: 'Paginated list of cat numbers with total count' }),
+    openapi.ApiResponse({ status: 200, type: require("./dto/cat.dto").CatNumbersPaginatedResultDto }),
+    __param(0, (0, common_1.Param)('itemsPerPage', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('currentPage', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "getCatNumbers", null);
 exports.CatsController = CatsController = __decorate([
     (0, swagger_1.ApiTags)('api'),
     (0, common_1.Controller)('api'),

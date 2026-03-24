@@ -35,6 +35,12 @@ export declare class CatsPaginatedResultDto {
     currentPage: number;
     itemsPerPage: number;
 }
+export declare class CatNumbersPaginatedResultDto {
+    catNumbers: number[];
+    total: number;
+    currentPage: number;
+    itemsPerPage: number;
+}
 export declare class StatusDto {
     totalCats: number;
     lastSyncedCatNumber: number;

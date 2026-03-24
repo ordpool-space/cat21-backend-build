@@ -1,6 +1,6 @@
 import type { FastifyReply } from 'fastify';
 import { CatsService } from './cats.service';
-import { CatDto, CatsPaginatedResultDto, HealthDto, StatusDto } from './dto/cat.dto';
+import { CatDto, CatNumbersPaginatedResultDto, CatsPaginatedResultDto, HealthDto, StatusDto } from './dto/cat.dto';
 export declare class CatsController {
     private readonly catsService;
     constructor(catsService: CatsService);
@@ -11,4 +11,5 @@ export declare class CatsController {
     getCatSvg(catNumber: number, reply: FastifyReply): Promise<never>;
     getCatWebp(catNumber: number, reply: FastifyReply): Promise<never>;
     getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
+    getCatNumbers(itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
 }

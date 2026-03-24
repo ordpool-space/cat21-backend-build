@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HealthDto = exports.StatusDto = exports.CatsPaginatedResultDto = exports.CatDto = void 0;
+exports.HealthDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 class CatDto {
@@ -156,6 +156,28 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Number of cats per page', example: 48 }),
     __metadata("design:type", Number)
 ], CatsPaginatedResultDto.prototype, "itemsPerPage", void 0);
+class CatNumbersPaginatedResultDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { catNumbers: { required: true, type: () => [Number] }, total: { required: true, type: () => Number }, currentPage: { required: true, type: () => Number }, itemsPerPage: { required: true, type: () => Number } };
+    }
+}
+exports.CatNumbersPaginatedResultDto = CatNumbersPaginatedResultDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ type: [Number], description: 'Array of cat numbers for the current page', example: [63731, 63730, 63729] }),
+    __metadata("design:type", Array)
+], CatNumbersPaginatedResultDto.prototype, "catNumbers", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Total number of cats across all pages', example: 63732 }),
+    __metadata("design:type", Number)
+], CatNumbersPaginatedResultDto.prototype, "total", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Current page number (1-based)', example: 1 }),
+    __metadata("design:type", Number)
+], CatNumbersPaginatedResultDto.prototype, "currentPage", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Number of cats per page', example: 48 }),
+    __metadata("design:type", Number)
+], CatNumbersPaginatedResultDto.prototype, "itemsPerPage", void 0);
 class StatusDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number } };
