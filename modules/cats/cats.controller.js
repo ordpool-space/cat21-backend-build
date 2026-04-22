@@ -27,6 +27,14 @@ let CatsController = class CatsController {
     getHealth() {
         return this.catsService.getHealth();
     }
+    async getExtendedHealth(reply) {
+        reply.header('Cache-Control', 'no-store');
+        const health = await this.catsService.getExtendedHealth();
+        if (health.status === 'down') {
+            throw new common_1.ServiceUnavailableException(health);
+        }
+        return health;
+    }
     async getStatus() {
         return this.catsService.getStatus();
     }
@@ -96,13 +104,24 @@ let CatsController = class CatsController {
 exports.CatsController = CatsController;
 __decorate([
     (0, common_1.Get)('health'),
-    (0, swagger_1.ApiOperation)({ summary: 'Health check', description: 'Returns service health info including uptime and version.' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Health check', description: 'Lean liveness probe — confirms the Node process is alive. Used by Koyeb container health checks; does NOT query the database. For truthful service health (DB reachability, sync freshness), use /api/extendedHealth.' }),
     (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.HealthDto }),
     openapi.ApiResponse({ status: 200, type: require("./dto/cat.dto").HealthDto }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", cat_dto_1.HealthDto)
 ], CatsController.prototype, "getHealth", null);
+__decorate([
+    (0, common_1.Get)('extendedHealth'),
+    (0, swagger_1.ApiOperation)({ summary: 'Extended health check', description: 'Truthful service health: runs a live SELECT 1 against the database and reports sync freshness. Returns 200 when the DB is reachable (even if sync is stalled — status is "degraded"), or 503 when the DB ping fails ("down"). Intended for external monitors and humans, not for container liveness probes.' }),
+    (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.ExtendedHealthDto, description: 'DB reachable. status is "ok" when sync is fresh or "degraded" when stalled.' }),
+    (0, swagger_1.ApiServiceUnavailableResponse)({ type: cat_dto_1.ExtendedHealthDto, description: 'DB unreachable. The response body is an ExtendedHealthDto with status: "down" and database.error set.' }),
+    openapi.ApiResponse({ status: 200, type: require("./dto/cat.dto").ExtendedHealthDto }),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "getExtendedHealth", null);
 __decorate([
     (0, common_1.Get)('status'),
     (0, swagger_1.ApiOperation)({ summary: 'Sync status', description: 'Returns the total number of indexed cats and the last synced cat number.' }),

@@ -1,0 +1,42 @@
+import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { CatDto } from '../../cats/dto/cat.dto';
+export declare class CacheService implements OnModuleInit, OnModuleDestroy {
+    private readonly logger;
+    private readonly memoryLimit;
+    private readonly catsByNumber;
+    private readonly txHashToNumber;
+    private totalCatCount;
+    private lastSyncedCatNumber;
+    private proofOfCatWork;
+    private memoryCheckTimer;
+    constructor();
+    onModuleInit(): void;
+    onModuleDestroy(): void;
+    private isPinnedNumber;
+    getCachedCat(catNumber: number): CatDto | undefined;
+    getCachedCatNumberByTxHash(txHash: string): number | undefined;
+    setCachedCat(cat: CatDto): void;
+    computeCatNumbersForPage(ipp: number, page: number): number[];
+    getTotalCatCount(): number;
+    getLastSyncedCatNumber(): number;
+    setTotals(total: number, lastSynced: number): void;
+    getProofOfCatWork(): number;
+    setProofOfCatWork(sumFromDb: number): void;
+    onNewCatsSynced(newMax: number): void;
+    private getMemoryInfo;
+    private clampCapacity;
+    private adjustCacheSizes;
+    getStats(): {
+        cats: number;
+        catsMax: number;
+        txHashIndex: number;
+        totalCatCount: number;
+        lastSyncedCatNumber: number;
+        proofOfCatWork: number;
+        memoryLimitMB: number;
+        memoryTargetMB: number;
+        memoryHeadroomMB: number;
+        memoryRssMB: number;
+        memoryHeapUsedMB: number;
+    };
+}

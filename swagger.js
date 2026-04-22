@@ -5,7 +5,7 @@ const swagger_1 = require("@nestjs/swagger");
 function setupSwagger(app) {
     const config = new swagger_1.DocumentBuilder()
         .setTitle('CAT-21 Backend')
-        .setDescription('REST API for CAT-21 cat data with traits')
+        .setDescription('REST API for CAT-21 cat data with traits. Expand responses and click "Schema" to see full type information.')
         .setVersion('0.1.0')
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);

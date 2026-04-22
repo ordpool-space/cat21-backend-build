@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HealthDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = void 0;
+exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 class CatDto {
@@ -180,7 +180,7 @@ __decorate([
 ], CatNumbersPaginatedResultDto.prototype, "itemsPerPage", void 0);
 class StatusDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number } };
+        return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number } };
     }
 }
 exports.StatusDto = StatusDto;
@@ -192,9 +192,66 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Cat number of the last synced cat (-1 if none)', example: 63731 }),
     __metadata("design:type", Number)
 ], StatusDto.prototype, "lastSyncedCatNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Proof of Cat Work: the total Bitcoin fees (in sats) paid to miners across all CAT-21 mint transactions. This number only grows, never decreases. See the CAT-21 whitepaper for the philosophical foundation.',
+        example: 5234876543,
+    }),
+    __metadata("design:type", Number)
+], StatusDto.prototype, "proofOfCatWork", void 0);
+class CacheStatsDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { cats: { required: true, type: () => Number }, catsMax: { required: true, type: () => Number }, txHashIndex: { required: true, type: () => Number }, totalCatCount: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number }, memoryLimitMB: { required: true, type: () => Number }, memoryTargetMB: { required: true, type: () => Number }, memoryHeadroomMB: { required: true, type: () => Number }, memoryRssMB: { required: true, type: () => Number }, memoryHeapUsedMB: { required: true, type: () => Number } };
+    }
+}
+exports.CacheStatsDto = CacheStatsDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Number of cats currently in the LRU cache. Oldest 2400 and newest 2400 are pinned (never evicted).', example: 5000 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "cats", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Max capacity of the cat LRU (dynamically adjusted between 5300 and 20000)', example: 10000 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "catsMax", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Number of txHash index entries (secondary lookup map)', example: 5000 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "txHashIndex", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Cached total cat count (maintained via auto-bump + sync notifications)', example: 63732 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "totalCatCount", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Cached last synced cat number. Defines the newest-pinned range: [n-2399 .. n].', example: 63731 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "lastSyncedCatNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Cached Proof of Cat Work (sum of all mint fees in sats). Refreshed from DB after each sync cycle.', example: 5234876543 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "proofOfCatWork", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Detected container memory limit in MB (cgroup v2/v1, Node 20+ constrainedMemory, or fallback)', example: 512 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "memoryLimitMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Target memory ceiling (75% of limit) in MB', example: 384 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "memoryTargetMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Available memory before hitting target, in MB', example: 263 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "memoryHeadroomMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Current resident memory (RSS) in MB', example: 121 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "memoryRssMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Current V8 heap used in MB', example: 45 }),
+    __metadata("design:type", Number)
+], CacheStatsDto.prototype, "memoryHeapUsedMB", void 0);
 class HealthDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { status: { required: true, type: () => String }, timestamp: { required: true, type: () => String }, uptimeSec: { required: true, type: () => Number }, version: { required: true, type: () => String } };
+        return { status: { required: true, type: () => String }, timestamp: { required: true, type: () => String }, uptimeSec: { required: true, type: () => Number }, version: { required: true, type: () => String }, memoryMB: { required: true, type: () => Number }, cache: { required: true, type: () => require("./cat.dto").CacheStatsDto } };
     }
 }
 exports.HealthDto = HealthDto;
@@ -214,4 +271,98 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Backend version', example: '0.1.0' }),
     __metadata("design:type", String)
 ], HealthDto.prototype, "version", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Resident memory in MB', example: 85 }),
+    __metadata("design:type", Number)
+], HealthDto.prototype, "memoryMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'In-memory cache statistics', type: CacheStatsDto }),
+    __metadata("design:type", CacheStatsDto)
+], HealthDto.prototype, "cache", void 0);
+class DatabaseHealthDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { reachable: { required: true, type: () => Boolean }, latencyMs: { required: true, type: () => Number, nullable: true }, error: { required: true, type: () => String, nullable: true } };
+    }
+}
+exports.DatabaseHealthDto = DatabaseHealthDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Whether the database responded to a SELECT 1 ping', example: true }),
+    __metadata("design:type", Boolean)
+], DatabaseHealthDto.prototype, "reachable", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'DB round-trip time in ms for the SELECT 1 ping. Null when the ping failed.', example: 12, nullable: true }),
+    __metadata("design:type", Object)
+], DatabaseHealthDto.prototype, "latencyMs", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Short error message from the database driver when unreachable (truncated to 200 chars). Null when reachable.', example: null, nullable: true }),
+    __metadata("design:type", Object)
+], DatabaseHealthDto.prototype, "error", void 0);
+class SyncHealthDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { lastSuccessAt: { required: true, type: () => String, nullable: true }, lastErrorAt: { required: true, type: () => String, nullable: true }, lastError: { required: true, type: () => String, nullable: true }, secondsSinceLastSuccess: { required: true, type: () => Number, nullable: true }, stalled: { required: true, type: () => Boolean } };
+    }
+}
+exports.SyncHealthDto = SyncHealthDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'ISO timestamp of the last successful sync cycle. Null until the first cycle completes after startup.', example: '2026-04-20T09:12:33.000Z', nullable: true }),
+    __metadata("design:type", Object)
+], SyncHealthDto.prototype, "lastSuccessAt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'ISO timestamp of the last sync cycle that threw. Null when no sync has errored since startup.', example: null, nullable: true }),
+    __metadata("design:type", Object)
+], SyncHealthDto.prototype, "lastErrorAt", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Short message of the last sync error. Null when no sync has errored since startup.', example: null, nullable: true }),
+    __metadata("design:type", Object)
+], SyncHealthDto.prototype, "lastError", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Seconds since the last successful sync cycle. Null until the first successful cycle.', example: 42, nullable: true }),
+    __metadata("design:type", Object)
+], SyncHealthDto.prototype, "secondsSinceLastSuccess", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'True when the sync has not succeeded within the stall threshold (default 300 s).', example: false }),
+    __metadata("design:type", Boolean)
+], SyncHealthDto.prototype, "stalled", void 0);
+class ExtendedHealthDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { status: { required: true, type: () => Object }, timestamp: { required: true, type: () => String }, uptimeSec: { required: true, type: () => Number }, version: { required: true, type: () => String }, memoryMB: { required: true, type: () => Number }, database: { required: true, type: () => require("./cat.dto").DatabaseHealthDto }, sync: { required: true, type: () => require("./cat.dto").SyncHealthDto }, cache: { required: true, type: () => require("./cat.dto").CacheStatsDto } };
+    }
+}
+exports.ExtendedHealthDto = ExtendedHealthDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Rollup status: "ok" when DB is reachable and sync is fresh; "degraded" when DB is reachable but sync is stalled; "down" when the DB ping failed.',
+        example: 'ok',
+        enum: ['ok', 'degraded', 'down'],
+    }),
+    __metadata("design:type", String)
+], ExtendedHealthDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Current server time (ISO 8601)', example: '2026-04-20T09:13:15.000Z' }),
+    __metadata("design:type", String)
+], ExtendedHealthDto.prototype, "timestamp", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Server uptime in seconds', example: 3600 }),
+    __metadata("design:type", Number)
+], ExtendedHealthDto.prototype, "uptimeSec", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Backend version', example: '0.1.0' }),
+    __metadata("design:type", String)
+], ExtendedHealthDto.prototype, "version", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Resident memory in MB', example: 85 }),
+    __metadata("design:type", Number)
+], ExtendedHealthDto.prototype, "memoryMB", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Result of a live SELECT 1 against the database', type: DatabaseHealthDto }),
+    __metadata("design:type", DatabaseHealthDto)
+], ExtendedHealthDto.prototype, "database", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Last sync cycle outcome and freshness signal', type: SyncHealthDto }),
+    __metadata("design:type", SyncHealthDto)
+], ExtendedHealthDto.prototype, "sync", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'In-memory cache statistics', type: CacheStatsDto }),
+    __metadata("design:type", CacheStatsDto)
+], ExtendedHealthDto.prototype, "cache", void 0);
 //# sourceMappingURL=cat.dto.js.map

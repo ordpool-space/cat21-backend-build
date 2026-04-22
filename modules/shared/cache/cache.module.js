@@ -6,20 +6,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CatsModule = void 0;
+exports.CacheModule = void 0;
 const common_1 = require("@nestjs/common");
-const cache_module_1 = require("../shared/cache/cache.module");
-const sync_module_1 = require("../sync/sync.module");
-const cats_controller_1 = require("./cats.controller");
-const cats_service_1 = require("./cats.service");
-let CatsModule = class CatsModule {
+const cache_service_1 = require("./cache.service");
+let CacheModule = class CacheModule {
 };
-exports.CatsModule = CatsModule;
-exports.CatsModule = CatsModule = __decorate([
+exports.CacheModule = CacheModule;
+exports.CacheModule = CacheModule = __decorate([
     (0, common_1.Module)({
-        imports: [cache_module_1.CacheModule, sync_module_1.SyncModule],
-        controllers: [cats_controller_1.CatsController],
-        providers: [cats_service_1.CatsService],
+        providers: [cache_service_1.CacheService],
+        exports: [cache_service_1.CacheService],
     })
-], CatsModule);
-//# sourceMappingURL=cats.module.js.map
+], CacheModule);
+//# sourceMappingURL=cache.module.js.map

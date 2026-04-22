@@ -44,10 +44,48 @@ export declare class CatNumbersPaginatedResultDto {
 export declare class StatusDto {
     totalCats: number;
     lastSyncedCatNumber: number;
+    proofOfCatWork: number;
+}
+export declare class CacheStatsDto {
+    cats: number;
+    catsMax: number;
+    txHashIndex: number;
+    totalCatCount: number;
+    lastSyncedCatNumber: number;
+    proofOfCatWork: number;
+    memoryLimitMB: number;
+    memoryTargetMB: number;
+    memoryHeadroomMB: number;
+    memoryRssMB: number;
+    memoryHeapUsedMB: number;
 }
 export declare class HealthDto {
     status: string;
     timestamp: string;
     uptimeSec: number;
     version: string;
+    memoryMB: number;
+    cache: CacheStatsDto;
+}
+export declare class DatabaseHealthDto {
+    reachable: boolean;
+    latencyMs: number | null;
+    error: string | null;
+}
+export declare class SyncHealthDto {
+    lastSuccessAt: string | null;
+    lastErrorAt: string | null;
+    lastError: string | null;
+    secondsSinceLastSuccess: number | null;
+    stalled: boolean;
+}
+export declare class ExtendedHealthDto {
+    status: 'ok' | 'degraded' | 'down';
+    timestamp: string;
+    uptimeSec: number;
+    version: string;
+    memoryMB: number;
+    database: DatabaseHealthDto;
+    sync: SyncHealthDto;
+    cache: CacheStatsDto;
 }

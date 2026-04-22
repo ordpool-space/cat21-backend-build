@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SyncModule = void 0;
 const common_1 = require("@nestjs/common");
+const cache_module_1 = require("../shared/cache/cache.module");
 const ord_client_service_1 = require("./ord-client.service");
 const sync_service_1 = require("./sync.service");
 let SyncModule = class SyncModule {
@@ -15,8 +16,9 @@ let SyncModule = class SyncModule {
 exports.SyncModule = SyncModule;
 exports.SyncModule = SyncModule = __decorate([
     (0, common_1.Module)({
+        imports: [cache_module_1.CacheModule],
         providers: [ord_client_service_1.OrdClientService, sync_service_1.SyncService],
-        exports: [ord_client_service_1.OrdClientService],
+        exports: [ord_client_service_1.OrdClientService, sync_service_1.SyncService],
     })
 ], SyncModule);
 //# sourceMappingURL=sync.module.js.map

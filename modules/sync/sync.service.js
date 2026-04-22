@@ -16,10 +16,11 @@ const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const drizzle_orm_1 = require("drizzle-orm");
 const ordpool_parser_1 = require("ordpool-parser");
+const cache_service_1 = require("../shared/cache/cache.service");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const cats_1 = require("../shared/drizzle/schema/cats");
 const ord_client_service_1 = require("./ord-client.service");
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 50;
 function deriveCategory(catNumber) {
     if (catNumber < 1000)
         return 'sub1k';
@@ -38,12 +39,24 @@ function deriveCategory(catNumber) {
     return '';
 }
 let SyncService = SyncService_1 = class SyncService {
-    constructor(drizzle, ordClient) {
+    constructor(drizzle, ordClient, cache) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
+        this.cache = cache;
         this.logger = new common_1.Logger(SyncService_1.name);
         this.syncing = false;
+        this.localMax = -1;
         this.blockHashCache = new Map();
+        this.lastSuccessAt = null;
+        this.lastErrorAt = null;
+        this.lastError = null;
+    }
+    getSyncHealth() {
+        return {
+            lastSuccessAt: this.lastSuccessAt,
+            lastErrorAt: this.lastErrorAt,
+            lastError: this.lastError,
+        };
     }
     async handleSync() {
         await this.sync();
@@ -63,18 +76,21 @@ let SyncService = SyncService_1 = class SyncService {
         }
         this.syncing = true;
         try {
-            const [result] = await this.drizzle.db
-                .select({ maxCatNumber: (0, drizzle_orm_1.max)(cats_1.cats.catNumber) })
-                .from(cats_1.cats);
-            const localMax = result.maxCatNumber ?? -1;
+            if (this.localMax < 0) {
+                const [result] = await this.drizzle.db
+                    .select({ maxCatNumber: (0, drizzle_orm_1.max)(cats_1.cats.catNumber) })
+                    .from(cats_1.cats);
+                this.localMax = result.maxCatNumber ?? -1;
+            }
             const remoteMax = await this.ordClient.getLatestCatNumber();
-            if (remoteMax <= localMax) {
-                this.logger.debug(`Already up to date (local: #${localMax}, remote: #${remoteMax})`);
+            if (remoteMax <= this.localMax) {
+                this.logger.debug(`Already up to date (local: #${this.localMax}, remote: #${remoteMax})`);
+                this.lastSuccessAt = new Date();
                 return;
             }
-            const totalToSync = remoteMax - localMax;
-            this.logger.log(`Syncing cats #${localMax + 1} to #${remoteMax} (${totalToSync} cats)`);
-            let nextCatNumber = localMax + 1;
+            const totalToSync = remoteMax - this.localMax;
+            this.logger.log(`Syncing cats #${this.localMax + 1} to #${remoteMax} (${totalToSync} cats)`);
+            let nextCatNumber = this.localMax + 1;
             let insertedCount = 0;
             while (nextCatNumber <= remoteMax) {
                 const batchEnd = Math.min(nextCatNumber + BATCH_SIZE, remoteMax + 1);
@@ -132,15 +148,26 @@ let SyncService = SyncService_1 = class SyncService {
                     };
                 });
                 await this.drizzle.db.insert(cats_1.cats).values(rows).onConflictDoNothing();
+                const batchMax = rows[rows.length - 1].catNumber;
+                this.cache.onNewCatsSynced(batchMax);
                 insertedCount += details.length;
                 nextCatNumber += numbers.length;
                 if (insertedCount % 100 < BATCH_SIZE) {
                     this.logger.log(`Synced ${insertedCount}/${totalToSync} cats (up to #${nextCatNumber - 1})`);
                 }
             }
+            this.localMax = remoteMax;
+            this.cache.onNewCatsSynced(remoteMax);
+            const [sumResult] = await this.drizzle.db
+                .select({ proofOfCatWork: (0, drizzle_orm_1.sum)(cats_1.cats.fee) })
+                .from(cats_1.cats);
+            this.cache.setProofOfCatWork(Number(sumResult.proofOfCatWork ?? 0));
             this.logger.log(`Sync complete: ${insertedCount} new cats (synced up to #${remoteMax})`);
+            this.lastSuccessAt = new Date();
         }
         catch (error) {
+            this.lastErrorAt = new Date();
+            this.lastError = error instanceof Error ? error.message : String(error);
             this.logger.error('Sync failed', error);
         }
         finally {
@@ -159,6 +186,7 @@ __decorate([
 exports.SyncService = SyncService = SyncService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService])
+        ord_client_service_1.OrdClientService,
+        cache_service_1.CacheService])
 ], SyncService);
 //# sourceMappingURL=sync.service.js.map

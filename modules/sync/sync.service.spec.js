@@ -68,8 +68,9 @@ describe('SyncService', () => {
             getCat: jest.fn().mockImplementation((n) => Promise.resolve(makeCat(n))),
             getBlockHash: jest.fn().mockImplementation(() => Promise.resolve('0'.repeat(64))),
         };
-        const service = new sync_service_1.SyncService(drizzle, ordClient);
-        return { service, drizzle, ordClient, insertMock };
+        const cache = { onNewCatsSynced: jest.fn() };
+        const service = new sync_service_1.SyncService(drizzle, ordClient, cache);
+        return { service, drizzle, ordClient, insertMock, cache };
     }
     it('should skip sync when already up to date', async () => {
         const { service, ordClient, insertMock } = createMocks(10, 10);
@@ -107,7 +108,7 @@ describe('SyncService', () => {
         expect(ordClient.getCat).toHaveBeenCalledWith(10);
         expect(ordClient.getCat).toHaveBeenCalledWith(20);
         expect(ordClient.getCat).toHaveBeenCalledWith(24);
-        expect(insertMock).toHaveBeenCalledTimes(3);
+        expect(insertMock).toHaveBeenCalledTimes(1);
     });
     it('should fetch block hashes for unique heights only', async () => {
         const { service, ordClient } = createMocks(-1, 1);
@@ -178,11 +179,8 @@ describe('SyncService', () => {
         const { service, ordClient } = createMocks(-1, 0);
         await service.sync();
         expect(ordClient.getBlockHash).toHaveBeenCalledTimes(1);
-        ordClient.getLatestCatNumber.mockResolvedValue(0);
-        ordClient.getCat.mockResolvedValue(makeCat(0));
-        service.drizzle.db.select.mockReturnValue({
-            from: jest.fn().mockResolvedValue([{ maxCatNumber: -1 }]),
-        });
+        ordClient.getLatestCatNumber.mockResolvedValue(1);
+        ordClient.getCat.mockResolvedValue(makeCat(1));
         await service.sync();
         expect(ordClient.getBlockHash).toHaveBeenCalledTimes(2);
     });
