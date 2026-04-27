@@ -1,29 +1,29 @@
-export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
+export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumns<{
     name: "cats";
     schema: undefined;
     columns: {
-        id: import("drizzle-orm/pg-core").PgColumn<{
+        id: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "id";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgUUID";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: true;
             isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
+            hasRuntimeDefault: true;
+            enumValues: [string, ...string[]];
             baseColumn: never;
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        catNumber: import("drizzle-orm/pg-core").PgColumn<{
+        catNumber: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "cat_number";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "MySqlInt";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -36,13 +36,13 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        txHash: import("drizzle-orm/pg-core").PgColumn<{
+        txHash: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "tx_hash";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
@@ -52,16 +52,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 64;
-        }>;
-        blockHash: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        blockHash: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "block_hash";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
@@ -71,14 +69,12 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 64;
-        }>;
-        blockHeight: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        blockHeight: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "block_height";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "MySqlInt";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -91,13 +87,13 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        mintedAt: import("drizzle-orm/pg-core").PgColumn<{
+        mintedAt: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "minted_at";
             tableName: "cats";
             dataType: "date";
-            columnType: "PgTimestamp";
+            columnType: "MySqlDateTime";
             data: Date;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
@@ -108,13 +104,13 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        mintedBy: import("drizzle-orm/pg-core").PgColumn<{
+        mintedBy: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "minted_by";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
@@ -124,14 +120,12 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 256;
-        }>;
-        fee: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        fee: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "fee";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgBigInt53";
+            columnType: "MySqlBigInt53";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -144,11 +138,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        weight: import("drizzle-orm/pg-core").PgColumn<{
+        weight: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "weight";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "MySqlInt";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -161,11 +155,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        size: import("drizzle-orm/pg-core").PgColumn<{
+        size: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "size";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "MySqlInt";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -178,11 +172,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        feeRate: import("drizzle-orm/pg-core").PgColumn<{
+        feeRate: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "feerate";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgDoublePrecision";
+            columnType: "MySqlDouble";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -195,11 +189,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        sat: import("drizzle-orm/pg-core").PgColumn<{
+        sat: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "sat";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgBigInt53";
+            columnType: "MySqlBigInt53";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -212,11 +206,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        value: import("drizzle-orm/pg-core").PgColumn<{
+        value: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "value";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgBigInt53";
+            columnType: "MySqlBigInt53";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -229,92 +223,66 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        category: import("drizzle-orm/pg-core").PgColumn<{
+        category: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "category";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        genesis: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "genesis";
+            tableName: "cats";
+            dataType: "boolean";
+            columnType: "MySqlBoolean";
+            data: boolean;
+            driverParam: number | boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        catColors: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "cat_colors";
+            tableName: "cats";
+            dataType: "json";
+            columnType: "MySqlJson";
+            data: string[];
             driverParam: string;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        genesis: import("drizzle-orm/pg-core").PgColumn<{
-            name: "genesis";
-            tableName: "cats";
-            dataType: "boolean";
-            columnType: "PgBoolean";
-            data: boolean;
-            driverParam: boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
             enumValues: undefined;
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {}>;
-        catColors: import("drizzle-orm/pg-core").PgColumn<{
-            name: "cat_colors";
-            tableName: "cats";
-            dataType: "array";
-            columnType: "PgArray";
-            data: string[];
-            driverParam: string | string[];
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: import("drizzle-orm").Column<{
-                name: "cat_colors";
-                tableName: "cats";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                driverParam: string;
-                notNull: false;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: [string, ...string[]];
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
-            identity: undefined;
-            generated: undefined;
         }, {}, {
-            size: undefined;
-            baseBuilder: import("drizzle-orm/pg-core").PgColumnBuilder<{
-                name: "cat_colors";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                enumValues: [string, ...string[]];
-                driverParam: string;
-            }, {}, {}, import("drizzle-orm").ColumnBuilderExtraConfig>;
+            $type: string[];
         }>;
-        male: import("drizzle-orm/pg-core").PgColumn<{
+        male: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "male";
             tableName: "cats";
             dataType: "boolean";
-            columnType: "PgBoolean";
+            columnType: "MySqlBoolean";
             data: boolean;
-            driverParam: boolean;
+            driverParam: number | boolean;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -325,13 +293,13 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        female: import("drizzle-orm/pg-core").PgColumn<{
+        female: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "female";
             tableName: "cats";
             dataType: "boolean";
-            columnType: "PgBoolean";
+            columnType: "MySqlBoolean";
             data: boolean;
-            driverParam: boolean;
+            driverParam: number | boolean;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -342,11 +310,11 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        designIndex: import("drizzle-orm/pg-core").PgColumn<{
+        designIndex: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "design_index";
             tableName: "cats";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "MySqlInt";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -359,13 +327,13 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        designPose: import("drizzle-orm/pg-core").PgColumn<{
+        designPose: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "design_pose";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -375,16 +343,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        designExpression: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        designExpression: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "design_expression";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -394,16 +360,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        designPattern: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        designPattern: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "design_pattern";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -413,16 +377,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        designFacing: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        designFacing: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "design_facing";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -432,16 +394,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 10;
-        }>;
-        laserEyes: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        laserEyes: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "laser_eyes";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -451,16 +411,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        background: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        background: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "background";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -470,59 +428,33 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        backgroundColors: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        backgroundColors: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "background_colors";
             tableName: "cats";
-            dataType: "array";
-            columnType: "PgArray";
+            dataType: "json";
+            columnType: "MySqlJson";
             data: string[];
-            driverParam: string | string[];
+            driverParam: string;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: import("drizzle-orm").Column<{
-                name: "background_colors";
-                tableName: "cats";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                driverParam: string;
-                notNull: false;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: [string, ...string[]];
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
+            enumValues: undefined;
+            baseColumn: never;
             identity: undefined;
             generated: undefined;
         }, {}, {
-            size: undefined;
-            baseBuilder: import("drizzle-orm/pg-core").PgColumnBuilder<{
-                name: "background_colors";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                enumValues: [string, ...string[]];
-                driverParam: string;
-            }, {}, {}, import("drizzle-orm").ColumnBuilderExtraConfig>;
+            $type: string[];
         }>;
-        crown: import("drizzle-orm/pg-core").PgColumn<{
+        crown: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "crown";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -532,16 +464,14 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        glasses: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        glasses: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "glasses";
             tableName: "cats";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "MySqlVarChar";
             data: string;
-            driverParam: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
@@ -551,52 +481,26 @@ export declare const cats: import("drizzle-orm/pg-core").PgTableWithColumns<{
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 50;
-        }>;
-        glassesColors: import("drizzle-orm/pg-core").PgColumn<{
+        }, {}, {}>;
+        glassesColors: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "glasses_colors";
             tableName: "cats";
-            dataType: "array";
-            columnType: "PgArray";
+            dataType: "json";
+            columnType: "MySqlJson";
             data: string[];
-            driverParam: string | string[];
+            driverParam: string;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: import("drizzle-orm").Column<{
-                name: "glasses_colors";
-                tableName: "cats";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                driverParam: string;
-                notNull: false;
-                hasDefault: false;
-                isPrimaryKey: false;
-                isAutoincrement: false;
-                hasRuntimeDefault: false;
-                enumValues: [string, ...string[]];
-                baseColumn: never;
-                identity: undefined;
-                generated: undefined;
-            }, {}, {}>;
+            enumValues: undefined;
+            baseColumn: never;
             identity: undefined;
             generated: undefined;
         }, {}, {
-            size: undefined;
-            baseBuilder: import("drizzle-orm/pg-core").PgColumnBuilder<{
-                name: "glasses_colors";
-                dataType: "string";
-                columnType: "PgText";
-                data: string;
-                enumValues: [string, ...string[]];
-                driverParam: string;
-            }, {}, {}, import("drizzle-orm").ColumnBuilderExtraConfig>;
+            $type: string[];
         }>;
     };
-    dialect: "pg";
+    dialect: "mysql";
 }>;

@@ -147,7 +147,7 @@ let SyncService = SyncService_1 = class SyncService {
                         glassesColors: traits?.glassesColors ?? [],
                     };
                 });
-                await this.drizzle.db.insert(cats_1.cats).values(rows).onConflictDoNothing();
+                await this.drizzle.db.insert(cats_1.cats).ignore().values(rows);
                 const batchMax = rows[rows.length - 1].catNumber;
                 this.cache.onNewCatsSynced(batchMax);
                 insertedCount += details.length;

@@ -25,9 +25,10 @@ async function bootstrap() {
     (0, swagger_1.setupSwagger)(app);
     const cfg = app.get(config_1.ConfigService);
     const port = cfg.get('PORT', 3333);
-    await app.listen(port, '0.0.0.0');
-    console.log(`API  : http://localhost:${port}`);
-    console.log(`Docs : http://localhost:${port}/docs`);
+    const host = cfg.get('HOST', '0.0.0.0');
+    await app.listen(port, host);
+    console.log(`API  : http://${host}:${port}`);
+    console.log(`Docs : http://${host}:${port}/docs`);
 }
 bootstrap().catch((err) => {
     console.error('Startup failed:', err);

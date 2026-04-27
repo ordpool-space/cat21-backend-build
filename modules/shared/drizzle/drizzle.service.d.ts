@@ -1,11 +1,12 @@
-import { OnModuleDestroy } from '@nestjs/common';
+import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { MySql2Database } from 'drizzle-orm/mysql2';
 import * as schema from './schema';
-export declare class DrizzleService implements OnModuleDestroy {
+export declare class DrizzleService implements OnModuleInit, OnModuleDestroy {
     private readonly logger;
     private readonly pool;
-    readonly db: NodePgDatabase<typeof schema>;
+    readonly db: MySql2Database<typeof schema>;
     constructor(configService: ConfigService);
+    onModuleInit(): Promise<void>;
     onModuleDestroy(): Promise<void>;
 }

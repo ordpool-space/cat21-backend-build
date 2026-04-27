@@ -51,8 +51,8 @@ describe('SyncService', () => {
     }
     function createMocks(localMax = null, remoteMax = 5) {
         const insertMock = jest.fn().mockReturnValue({
-            values: jest.fn().mockReturnValue({
-                onConflictDoNothing: jest.fn().mockResolvedValue(undefined),
+            ignore: jest.fn().mockReturnValue({
+                values: jest.fn().mockResolvedValue(undefined),
             }),
         });
         const drizzle = {
@@ -145,7 +145,7 @@ describe('SyncService', () => {
             .mockResolvedValueOnce(makeCat(2));
         await service.sync();
         expect(insertMock).toHaveBeenCalled();
-        const insertedValues = insertMock.mock.results[0].value.values.mock.calls[0][0];
+        const insertedValues = insertMock.mock.results[0].value.ignore.mock.results[0].value.values.mock.calls[0][0];
         expect(insertedValues).toHaveLength(2);
     });
     it('should break when entire batch fails (all cats return null or error)', async () => {

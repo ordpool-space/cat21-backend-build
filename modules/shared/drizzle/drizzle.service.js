@@ -11,18 +11,32 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var DrizzleService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DrizzleService = void 0;
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const pg_1 = require("pg");
-const node_postgres_1 = require("drizzle-orm/node-postgres");
+const promise_1 = require("mysql2/promise");
+const mysql2_1 = require("drizzle-orm/mysql2");
+const migrator_1 = require("drizzle-orm/mysql2/migrator");
 const schema = require("./schema");
 let DrizzleService = DrizzleService_1 = class DrizzleService {
     constructor(configService) {
         this.logger = new common_1.Logger(DrizzleService_1.name);
         const databaseUrl = configService.getOrThrow('DATABASE_URL');
-        this.pool = new pg_1.Pool({ connectionString: databaseUrl });
-        this.db = (0, node_postgres_1.drizzle)(this.pool, { schema });
+        this.pool = (0, promise_1.createPool)(databaseUrl);
+        this.db = (0, mysql2_1.drizzle)(this.pool, { schema, mode: 'default' });
         this.logger.log('Database connection pool created');
+    }
+    async onModuleInit() {
+        const candidates = ['./migrations', '../migrations'];
+        const folder = candidates.find((p) => (0, node_fs_1.existsSync)((0, node_path_1.join)(process.cwd(), p)));
+        if (!folder) {
+            this.logger.warn('No migrations folder found; skipping drizzle migrate');
+            return;
+        }
+        this.logger.log(`Applying drizzle migrations from ${folder}`);
+        await (0, migrator_1.migrate)(this.db, { migrationsFolder: folder });
+        this.logger.log('Drizzle migrations applied');
     }
     async onModuleDestroy() {
         await this.pool.end();

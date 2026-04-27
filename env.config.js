@@ -17,6 +17,7 @@ class EnvironmentVariables {
     constructor() {
         this.NODE_ENV = 'development';
         this.PORT = 3333;
+        this.HOST = '0.0.0.0';
         this.ORD_API_URL = 'https://ord.cat21.space';
     }
 }
@@ -33,6 +34,11 @@ __decorate([
     (0, class_validator_1.Max)(65535),
     __metadata("design:type", Number)
 ], EnvironmentVariables.prototype, "PORT", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "HOST", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
