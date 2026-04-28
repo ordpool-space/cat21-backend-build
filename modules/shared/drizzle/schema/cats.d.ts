@@ -260,8 +260,8 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
         catColors: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "cat_colors";
             tableName: "cats";
-            dataType: "json";
-            columnType: "MySqlJson";
+            dataType: "custom";
+            columnType: "MySqlCustomColumn";
             data: string[];
             driverParam: string;
             notNull: true;
@@ -273,9 +273,7 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            $type: string[];
-        }>;
+        }, {}, {}>;
         male: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "male";
             tableName: "cats";
@@ -432,8 +430,8 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
         backgroundColors: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "background_colors";
             tableName: "cats";
-            dataType: "json";
-            columnType: "MySqlJson";
+            dataType: "custom";
+            columnType: "MySqlCustomColumn";
             data: string[];
             driverParam: string;
             notNull: true;
@@ -445,9 +443,7 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            $type: string[];
-        }>;
+        }, {}, {}>;
         crown: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "crown";
             tableName: "cats";
@@ -485,8 +481,8 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
         glassesColors: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "glasses_colors";
             tableName: "cats";
-            dataType: "json";
-            columnType: "MySqlJson";
+            dataType: "custom";
+            columnType: "MySqlCustomColumn";
             data: string[];
             driverParam: string;
             notNull: true;
@@ -498,9 +494,7 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            $type: string[];
-        }>;
+        }, {}, {}>;
     };
     dialect: "mysql";
 }>;

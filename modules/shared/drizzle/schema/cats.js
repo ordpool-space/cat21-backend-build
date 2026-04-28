@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cats = void 0;
 const node_crypto_1 = require("node:crypto");
 const mysql_core_1 = require("drizzle-orm/mysql-core");
+const json_column_1 = require("./json-column");
+const jsonStringArray = (0, json_column_1.jsonColumn)();
 exports.cats = (0, mysql_core_1.mysqlTable)('cats', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 }).primaryKey().$defaultFn(() => (0, node_crypto_1.randomUUID)()),
     catNumber: (0, mysql_core_1.int)('cat_number').notNull().unique(),
@@ -19,7 +21,7 @@ exports.cats = (0, mysql_core_1.mysqlTable)('cats', {
     value: (0, mysql_core_1.bigint)('value', { mode: 'number' }).notNull(),
     category: (0, mysql_core_1.varchar)('category', { length: 50 }).notNull().default(''),
     genesis: (0, mysql_core_1.boolean)('genesis').notNull().default(false),
-    catColors: (0, mysql_core_1.json)('cat_colors').$type().notNull().default([]),
+    catColors: jsonStringArray('cat_colors').notNull().default([]),
     male: (0, mysql_core_1.boolean)('male').notNull().default(false),
     female: (0, mysql_core_1.boolean)('female').notNull().default(false),
     designIndex: (0, mysql_core_1.int)('design_index').notNull().default(0),
@@ -29,10 +31,10 @@ exports.cats = (0, mysql_core_1.mysqlTable)('cats', {
     designFacing: (0, mysql_core_1.varchar)('design_facing', { length: 10 }).notNull().default(''),
     laserEyes: (0, mysql_core_1.varchar)('laser_eyes', { length: 50 }).notNull().default('None'),
     background: (0, mysql_core_1.varchar)('background', { length: 50 }).notNull().default(''),
-    backgroundColors: (0, mysql_core_1.json)('background_colors').$type().notNull().default([]),
+    backgroundColors: jsonStringArray('background_colors').notNull().default([]),
     crown: (0, mysql_core_1.varchar)('crown', { length: 50 }).notNull().default('None'),
     glasses: (0, mysql_core_1.varchar)('glasses', { length: 50 }).notNull().default('None'),
-    glassesColors: (0, mysql_core_1.json)('glasses_colors').$type().notNull().default([]),
+    glassesColors: jsonStringArray('glasses_colors').notNull().default([]),
 }, (t) => [
     (0, mysql_core_1.index)('idx_cats_block_height').on(t.blockHeight),
     (0, mysql_core_1.index)('idx_cats_minted_by').on(t.mintedBy),
