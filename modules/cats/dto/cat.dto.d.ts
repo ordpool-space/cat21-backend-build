@@ -1,0 +1,91 @@
+export declare class CatDto {
+    id: string;
+    catNumber: number;
+    txHash: string;
+    blockHash: string;
+    blockHeight: number;
+    mintedAt: string;
+    mintedBy: string | null;
+    fee: number;
+    weight: number;
+    size: number;
+    feeRate: number;
+    sat: number;
+    value: number;
+    category: string;
+    genesis: boolean;
+    catColors: string[];
+    male: boolean;
+    female: boolean;
+    designIndex: number;
+    designPose: string;
+    designExpression: string;
+    designPattern: string;
+    designFacing: string;
+    laserEyes: string;
+    background: string;
+    backgroundColors: string[];
+    crown: string;
+    glasses: string;
+    glassesColors: string[];
+}
+export declare class CatsPaginatedResultDto {
+    cats: CatDto[];
+    total: number;
+    currentPage: number;
+    itemsPerPage: number;
+}
+export declare class CatNumbersPaginatedResultDto {
+    catNumbers: number[];
+    total: number;
+    currentPage: number;
+    itemsPerPage: number;
+}
+export declare class StatusDto {
+    totalCats: number;
+    lastSyncedCatNumber: number;
+    proofOfCatWork: number;
+}
+export declare class CacheStatsDto {
+    cats: number;
+    catsMax: number;
+    txHashIndex: number;
+    totalCatCount: number;
+    lastSyncedCatNumber: number;
+    proofOfCatWork: number;
+    memoryLimitMB: number;
+    memoryTargetMB: number;
+    memoryHeadroomMB: number;
+    memoryRssMB: number;
+    memoryHeapUsedMB: number;
+}
+export declare class HealthDto {
+    status: string;
+    timestamp: string;
+    uptimeSec: number;
+    version: string;
+    memoryMB: number;
+    cache: CacheStatsDto;
+}
+export declare class DatabaseHealthDto {
+    reachable: boolean;
+    latencyMs: number | null;
+    error: string | null;
+}
+export declare class SyncHealthDto {
+    lastSuccessAt: string | null;
+    lastErrorAt: string | null;
+    lastError: string | null;
+    secondsSinceLastSuccess: number | null;
+    stalled: boolean;
+}
+export declare class ExtendedHealthDto {
+    status: 'ok' | 'degraded' | 'down';
+    timestamp: string;
+    uptimeSec: number;
+    version: string;
+    memoryMB: number;
+    database: DatabaseHealthDto;
+    sync: SyncHealthDto;
+    cache: CacheStatsDto;
+}

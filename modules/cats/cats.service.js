@@ -1,0 +1,248 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CatsService = void 0;
+const common_1 = require("@nestjs/common");
+const drizzle_orm_1 = require("drizzle-orm");
+const ordpool_parser_1 = require("ordpool-parser");
+const cache_service_1 = require("../shared/cache/cache.service");
+const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
+const cats_1 = require("../shared/drizzle/schema/cats");
+const sync_service_1 = require("../sync/sync.service");
+const SYNC_STALL_SECONDS = 300;
+let CatsService = class CatsService {
+    constructor(drizzle, cache, sync) {
+        this.drizzle = drizzle;
+        this.cache = cache;
+        this.sync = sync;
+        this.startedAt = Date.now();
+    }
+    getHealth() {
+        return {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            uptimeSec: Math.floor((Date.now() - this.startedAt) / 1000),
+            version: process.env.npm_package_version ?? '0.1.0',
+            memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+            cache: this.cache.getStats(),
+        };
+    }
+    async getExtendedHealth() {
+        const pingStart = Date.now();
+        let reachable = false;
+        let latencyMs = null;
+        let dbError = null;
+        try {
+            await this.drizzle.db.execute((0, drizzle_orm_1.sql) `SELECT 1`);
+            reachable = true;
+            latencyMs = Date.now() - pingStart;
+        }
+        catch (e) {
+            dbError = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
+        }
+        const syncHealth = this.sync.getSyncHealth();
+        const now = Date.now();
+        const secondsSinceLastSuccess = syncHealth.lastSuccessAt
+            ? Math.floor((now - syncHealth.lastSuccessAt.getTime()) / 1000)
+            : null;
+        const stalled = secondsSinceLastSuccess === null || secondsSinceLastSuccess > SYNC_STALL_SECONDS;
+        let status;
+        if (!reachable) {
+            status = 'down';
+        }
+        else if (stalled) {
+            status = 'degraded';
+        }
+        else {
+            status = 'ok';
+        }
+        return {
+            status,
+            timestamp: new Date().toISOString(),
+            uptimeSec: Math.floor((now - this.startedAt) / 1000),
+            version: process.env.npm_package_version ?? '0.1.0',
+            memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
+            database: { reachable, latencyMs, error: dbError },
+            sync: {
+                lastSuccessAt: syncHealth.lastSuccessAt?.toISOString() ?? null,
+                lastErrorAt: syncHealth.lastErrorAt?.toISOString() ?? null,
+                lastError: syncHealth.lastError,
+                secondsSinceLastSuccess,
+                stalled,
+            },
+            cache: this.cache.getStats(),
+        };
+    }
+    async getStatus() {
+        await this.ensureTotalsPrimed();
+        return {
+            totalCats: this.cache.getTotalCatCount(),
+            lastSyncedCatNumber: this.cache.getLastSyncedCatNumber(),
+            proofOfCatWork: this.cache.getProofOfCatWork(),
+        };
+    }
+    async getCatByNumber(catNumber) {
+        const cached = this.cache.getCachedCat(catNumber);
+        if (cached)
+            return cached;
+        const [result] = await this.drizzle.db
+            .select()
+            .from(cats_1.cats)
+            .where((0, drizzle_orm_1.eq)(cats_1.cats.catNumber, catNumber));
+        if (!result)
+            return null;
+        const dto = this.mapToDto(result);
+        this.cache.setCachedCat(dto);
+        return dto;
+    }
+    async getCatByTxHash(txHash) {
+        const catNumber = this.cache.getCachedCatNumberByTxHash(txHash);
+        if (catNumber !== undefined) {
+            const cached = this.cache.getCachedCat(catNumber);
+            if (cached)
+                return cached;
+        }
+        const [result] = await this.drizzle.db
+            .select()
+            .from(cats_1.cats)
+            .where((0, drizzle_orm_1.eq)(cats_1.cats.txHash, txHash));
+        if (!result)
+            return null;
+        const dto = this.mapToDto(result);
+        this.cache.setCachedCat(dto);
+        return dto;
+    }
+    async getCats(itemsPerPage, currentPage) {
+        await this.ensureTotalsPrimed();
+        const catNumbers = this.cache.computeCatNumbersForPage(itemsPerPage, currentPage);
+        const total = this.cache.getTotalCatCount();
+        if (catNumbers.length === 0) {
+            return { cats: [], total, currentPage, itemsPerPage };
+        }
+        const catsFromCache = new Map();
+        const missingNumbers = [];
+        for (const n of catNumbers) {
+            const cached = this.cache.getCachedCat(n);
+            if (cached) {
+                catsFromCache.set(n, cached);
+            }
+            else {
+                missingNumbers.push(n);
+            }
+        }
+        if (missingNumbers.length > 0) {
+            const rows = await this.drizzle.db
+                .select()
+                .from(cats_1.cats)
+                .where((0, drizzle_orm_1.inArray)(cats_1.cats.catNumber, missingNumbers));
+            for (const row of rows) {
+                const dto = this.mapToDto(row);
+                this.cache.setCachedCat(dto);
+                catsFromCache.set(dto.catNumber, dto);
+            }
+        }
+        const dtos = catNumbers
+            .map((n) => catsFromCache.get(n))
+            .filter((c) => c !== undefined);
+        return {
+            cats: dtos,
+            total,
+            currentPage,
+            itemsPerPage,
+        };
+    }
+    async getCatNumbers(itemsPerPage, currentPage) {
+        await this.ensureTotalsPrimed();
+        const catNumbers = this.cache.computeCatNumbersForPage(itemsPerPage, currentPage);
+        const total = this.cache.getTotalCatCount();
+        return {
+            catNumbers,
+            total,
+            currentPage,
+            itemsPerPage,
+        };
+    }
+    async ensureTotalsPrimed() {
+        if (this.cache.getLastSyncedCatNumber() >= 0)
+            return;
+        const [result] = await this.drizzle.db
+            .select({
+            totalCats: (0, drizzle_orm_1.count)(),
+            lastSyncedCatNumber: (0, drizzle_orm_1.max)(cats_1.cats.catNumber),
+            proofOfCatWork: (0, drizzle_orm_1.sum)(cats_1.cats.fee),
+        })
+            .from(cats_1.cats);
+        this.cache.setTotals(result.totalCats, result.lastSyncedCatNumber ?? -1);
+        this.cache.setProofOfCatWork(Number(result.proofOfCatWork ?? 0));
+    }
+    async getCatSvg(catNumber) {
+        const [row] = await this.drizzle.db
+            .select({
+            txHash: cats_1.cats.txHash,
+            weight: cats_1.cats.weight,
+            fee: cats_1.cats.fee,
+            blockHash: cats_1.cats.blockHash,
+        })
+            .from(cats_1.cats)
+            .where((0, drizzle_orm_1.eq)(cats_1.cats.catNumber, catNumber));
+        if (!row)
+            return null;
+        const parsed = ordpool_parser_1.Cat21ParserService.parse({
+            txid: row.txHash,
+            locktime: 21,
+            weight: row.weight,
+            fee: row.fee,
+            status: { block_hash: row.blockHash },
+        });
+        return parsed?.getImage() ?? null;
+    }
+    mapToDto(row) {
+        return {
+            id: row.id,
+            catNumber: row.catNumber,
+            txHash: row.txHash,
+            blockHash: row.blockHash,
+            blockHeight: row.blockHeight,
+            mintedAt: row.mintedAt.toISOString(),
+            mintedBy: row.mintedBy,
+            fee: row.fee,
+            weight: row.weight,
+            size: row.size,
+            feeRate: row.feeRate,
+            sat: row.sat,
+            value: row.value,
+            category: row.category,
+            genesis: row.genesis,
+            catColors: row.catColors,
+            male: row.male,
+            female: row.female,
+            designIndex: row.designIndex,
+            designPose: row.designPose,
+            designExpression: row.designExpression,
+            designPattern: row.designPattern,
+            designFacing: row.designFacing,
+            laserEyes: row.laserEyes,
+            background: row.background,
+            backgroundColors: row.backgroundColors,
+            crown: row.crown,
+            glasses: row.glasses,
+            glassesColors: row.glassesColors,
+        };
+    }
+};
+exports.CatsService = CatsService;
+exports.CatsService = CatsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
+        cache_service_1.CacheService,
+        sync_service_1.SyncService])
+], CatsService);
+//# sourceMappingURL=cats.service.js.map
