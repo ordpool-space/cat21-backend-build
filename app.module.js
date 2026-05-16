@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const schedule_1 = require("@nestjs/schedule");
+const throttler_1 = require("@nestjs/throttler");
 const app_controller_1 = require("./app.controller");
 const env_config_1 = require("./env.config");
 const drizzle_module_1 = require("./modules/shared/drizzle/drizzle.module");
@@ -23,6 +24,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true, validate: env_config_1.validate }),
             schedule_1.ScheduleModule.forRoot(),
+            throttler_1.ThrottlerModule.forRoot([{ ttl: 60_000, limit: 30 }]),
             drizzle_module_1.DrizzleModule,
             cats_module_1.CatsModule,
             sync_module_1.SyncModule,

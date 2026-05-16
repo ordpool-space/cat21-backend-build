@@ -1,6 +1,6 @@
 import type { FastifyReply } from 'fastify';
 import { CatsService } from './cats.service';
-import { CatDto, CatNumbersPaginatedResultDto, CatsPaginatedResultDto, ExtendedHealthDto, HealthDto, StatusDto } from './dto/cat.dto';
+import { CatDto, CatNumbersPaginatedResultDto, CatSearchQueryDto, CatsPaginatedResultDto, ExtendedHealthDto, HealthDto, StatusDto } from './dto/cat.dto';
 export declare class CatsController {
     private readonly catsService;
     constructor(catsService: CatsService);
@@ -13,4 +13,8 @@ export declare class CatsController {
     getCatWebp(catNumber: number, reply: FastifyReply): Promise<never>;
     getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
     getCatNumbers(itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
+    randomCat(query: CatSearchQueryDto, reply: FastifyReply): Promise<{
+        catNumber: number;
+    }>;
+    searchCats(itemsPerPage: number, currentPage: number, query: CatSearchQueryDto): Promise<CatNumbersPaginatedResultDto>;
 }

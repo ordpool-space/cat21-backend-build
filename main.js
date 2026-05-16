@@ -11,7 +11,7 @@ const swagger_1 = require("./swagger");
 sharp.cache(false);
 sharp.concurrency(1);
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: false }));
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, new platform_fastify_1.FastifyAdapter({ logger: false, trustProxy: '127.0.0.1' }));
     await app.register(helmet_1.default, {
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: false,

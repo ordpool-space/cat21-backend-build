@@ -16,6 +16,7 @@ exports.CatsController = void 0;
 const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const throttler_1 = require("@nestjs/throttler");
 const sharp = require("sharp");
 const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
@@ -99,6 +100,17 @@ let CatsController = class CatsController {
     }
     async getCatNumbers(itemsPerPage, currentPage) {
         return this.catsService.getCatNumbers(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
+    }
+    async randomCat(query, reply) {
+        reply.header('Cache-Control', 'no-store');
+        const catNumber = await this.catsService.randomCatNumber(toSearchFilters(query));
+        if (catNumber === null) {
+            throw new common_1.NotFoundException('No cat matches the supplied filters');
+        }
+        return { catNumber };
+    }
+    async searchCats(itemsPerPage, currentPage, query) {
+        return this.catsService.searchCatNumbers(toSearchFilters(query), Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
     }
 };
 exports.CatsController = CatsController;
@@ -211,9 +223,77 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", Promise)
 ], CatsController.prototype, "getCatNumbers", null);
+__decorate([
+    (0, common_1.Get)('cats/search/random'),
+    (0, common_1.UseGuards)(throttler_1.ThrottlerGuard),
+    (0, throttler_1.Throttle)({ default: { ttl: 60_000, limit: 30 } }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Pick one random cat matching the supplied trait filters',
+        description: 'Returns a single random cat number from the set that matches the same ' +
+            'filter parameters as /cats/search. With no filters it picks a random ' +
+            'cat from the entire collection. Returns 404 if no cat matches. ' +
+            'Rate-limited to 30 requests per minute per IP.',
+    }),
+    (0, swagger_1.ApiOkResponse)({
+        description: 'A single random matching cat number',
+        schema: { type: 'object', properties: { catNumber: { type: 'number', example: 42 } } },
+    }),
+    (0, swagger_1.ApiNotFoundResponse)({ description: 'No cat matches the supplied filters' }),
+    (0, swagger_1.ApiTooManyRequestsResponse)({ description: 'Rate limit exceeded — wait a minute and try again' }),
+    openapi.ApiResponse({ status: 200 }),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [cat_dto_1.CatSearchQueryDto, Object]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "randomCat", null);
+__decorate([
+    (0, common_1.Get)('cats/search/:itemsPerPage/:currentPage'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Search cats by traits',
+        description: 'Returns paginated cat numbers matching the supplied trait filters. ' +
+            'Each filter accepts a comma-separated list of values (OR within a filter). ' +
+            'Multiple filters are AND-combined. An empty filter (no query params) ' +
+            'returns the full result set, equivalent to /cats/numbers/.',
+    }),
+    (0, swagger_1.ApiParam)({ name: 'itemsPerPage', description: 'Number of cats per page (max 100)', example: 48 }),
+    (0, swagger_1.ApiParam)({ name: 'currentPage', description: 'Page number (1-based)', example: 1 }),
+    (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.CatNumbersPaginatedResultDto, description: 'Paginated list of matching cat numbers with total count' }),
+    openapi.ApiResponse({ status: 200, type: require("./dto/cat.dto").CatNumbersPaginatedResultDto }),
+    __param(0, (0, common_1.Param)('itemsPerPage', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Param)('currentPage', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, cat_dto_1.CatSearchQueryDto]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "searchCats", null);
 exports.CatsController = CatsController = __decorate([
     (0, swagger_1.ApiTags)('api'),
     (0, common_1.Controller)('api'),
     __metadata("design:paramtypes", [cats_service_1.CatsService])
 ], CatsController);
+function toSearchFilters(q) {
+    return {
+        eyes: splitCsv(q.eyes),
+        pose: splitCsv(q.pose),
+        expression: splitCsv(q.expression),
+        pattern: splitCsv(q.pattern),
+        background: splitCsv(q.background),
+        crown: splitCsv(q.crown),
+        glasses: splitCsv(q.glasses),
+        category: splitCsv(q.category),
+        gender: splitCsv(q.gender),
+        color: splitCsv(q.color),
+    };
+}
+function splitCsv(value) {
+    if (!value)
+        return undefined;
+    const parts = value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+        .slice(0, 32);
+    return parts.length > 0 ? parts : undefined;
+}
 //# sourceMappingURL=cats.controller.js.map

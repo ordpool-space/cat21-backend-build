@@ -1,3 +1,15 @@
+export declare class CatSearchQueryDto {
+    eyes?: string;
+    pose?: string;
+    expression?: string;
+    pattern?: string;
+    background?: string;
+    crown?: string;
+    glasses?: string;
+    category?: string;
+    gender?: string;
+    color?: string;
+}
 export declare class CatDto {
     id: string;
     catNumber: number;

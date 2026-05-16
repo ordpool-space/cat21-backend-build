@@ -35,6 +35,7 @@ exports.cats = (0, mysql_core_1.mysqlTable)('cats', {
     crown: (0, mysql_core_1.varchar)('crown', { length: 50 }).notNull().default('None'),
     glasses: (0, mysql_core_1.varchar)('glasses', { length: 50 }).notNull().default('None'),
     glassesColors: jsonStringArray('glasses_colors').notNull().default([]),
+    dominantColorCategory: (0, mysql_core_1.varchar)('dominant_color_category', { length: 20 }),
 }, (t) => [
     (0, mysql_core_1.index)('idx_cats_block_height').on(t.blockHeight),
     (0, mysql_core_1.index)('idx_cats_minted_by').on(t.mintedBy),
@@ -45,5 +46,7 @@ exports.cats = (0, mysql_core_1.mysqlTable)('cats', {
     (0, mysql_core_1.index)('idx_cats_crown').on(t.crown),
     (0, mysql_core_1.index)('idx_cats_glasses').on(t.glasses),
     (0, mysql_core_1.index)('idx_cats_feerate').on(t.feeRate),
+    (0, mysql_core_1.index)('idx_cats_dominant_color_category').on(t.dominantColorCategory),
+    (0, mysql_core_1.index)('idx_cats_category').on(t.category),
 ]);
 //# sourceMappingURL=cats.js.map

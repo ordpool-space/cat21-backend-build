@@ -9,9 +9,122 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = void 0;
+exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
+const FILTER_MAX_LENGTH = 200;
+const EYES_VALUES = ['Orange', 'Red', 'Green', 'Blue', 'None'];
+const POSE_VALUES = ['Standing', 'Sleeping', 'Pouncing', 'Stalking'];
+const EXPRESSION_VALUES = ['Smile', 'Grumpy', 'Pouting', 'Shy'];
+const PATTERN_VALUES = ['Solid', 'Striped', 'Eyepatch', 'Half/Half'];
+const BACKGROUND_VALUES = ['Block9', 'Cyberpunk', 'Whitepaper', 'Orange'];
+const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
+const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
+const CATEGORY_VALUES = ['genesis', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+const GENDER_VALUES = ['male', 'female'];
+const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
+function csvOf(values) {
+    const alts = values.map((v) => v.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')).join('|');
+    return new RegExp(`^(?:${alts})(?:,(?:${alts}))*$`);
+}
+const EYES_CSV = csvOf(EYES_VALUES);
+const POSE_CSV = csvOf(POSE_VALUES);
+const EXPRESSION_CSV = csvOf(EXPRESSION_VALUES);
+const PATTERN_CSV = csvOf(PATTERN_VALUES);
+const BACKGROUND_CSV = csvOf(BACKGROUND_VALUES);
+const CROWN_CSV = csvOf(CROWN_VALUES);
+const GLASSES_CSV = csvOf(GLASSES_VALUES);
+const CATEGORY_CSV = csvOf(CATEGORY_VALUES);
+const GENDER_CSV = csvOf(GENDER_VALUES);
+const COLOR_CSV = csvOf(COLOR_VALUES);
+const msg = (name, values) => `${name} must be a comma-separated list of: ${values.join(', ')}`;
+class CatSearchQueryDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" } };
+    }
+}
+exports.CatSearchQueryDto = CatSearchQueryDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Laser eyes: Orange, Red, Green, Blue, None', example: 'Red,Blue' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(EYES_CSV, { message: msg('eyes', EYES_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "eyes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Pose: Standing, Sleeping, Pouncing, Stalking', example: 'Sleeping' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(POSE_CSV, { message: msg('pose', POSE_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "pose", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Expression: Smile, Grumpy, Pouting, Shy', example: 'Smile' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(EXPRESSION_CSV, { message: msg('expression', EXPRESSION_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "expression", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Coat pattern: Solid, Striped, Eyepatch, Half/Half', example: 'Striped' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(PATTERN_CSV, { message: msg('pattern', PATTERN_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "pattern", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Background: Block9, Cyberpunk, Whitepaper, Orange', example: 'Cyberpunk' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(BACKGROUND_CSV, { message: msg('background', BACKGROUND_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "background", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Crown: Gold, Diamond, None', example: 'Diamond' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(CROWN_CSV, { message: msg('crown', CROWN_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "crown", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Glasses: Black, Cool, 3D, Nouns, None', example: 'Cool' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(GLASSES_CSV, { message: msg('glasses', GLASSES_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "glasses", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: genesis, sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple bands OR-combine.', example: 'sub1k' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(CATEGORY_CSV, { message: msg('category', CATEGORY_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "category", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Gender: male, female', example: 'female' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(GENDER_CSV, { message: msg('gender', GENDER_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "gender", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Dominant body color bucket: red, orange, yellow, green, blue, purple, pink. Genesis cats have no body hue and never match.', example: 'red' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(COLOR_CSV, { message: msg('color', COLOR_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "color", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, male: { required: true, type: () => Boolean }, female: { required: true, type: () => Boolean }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] } };

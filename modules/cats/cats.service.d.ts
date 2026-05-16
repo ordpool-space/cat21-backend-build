@@ -1,7 +1,20 @@
+import { type SQL } from 'drizzle-orm';
 import { CacheService } from '../shared/cache/cache.service';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { SyncService } from '../sync/sync.service';
 import { CatDto, CatNumbersPaginatedResultDto, CatsPaginatedResultDto, ExtendedHealthDto, HealthDto, StatusDto } from './dto/cat.dto';
+export interface SearchFilters {
+    eyes?: string[];
+    pose?: string[];
+    expression?: string[];
+    pattern?: string[];
+    background?: string[];
+    crown?: string[];
+    glasses?: string[];
+    category?: string[];
+    gender?: string[];
+    color?: string[];
+}
 export declare class CatsService {
     private readonly drizzle;
     private readonly cache;
@@ -15,7 +28,10 @@ export declare class CatsService {
     getCatByTxHash(txHash: string): Promise<CatDto | null>;
     getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
     getCatNumbers(itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
+    searchCatNumbers(filters: SearchFilters, itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
+    randomCatNumber(filters: SearchFilters): Promise<number | null>;
     private ensureTotalsPrimed;
     getCatSvg(catNumber: number): Promise<string | null>;
     private mapToDto;
 }
+export declare function buildSearchWhere(filters: SearchFilters): SQL | undefined;

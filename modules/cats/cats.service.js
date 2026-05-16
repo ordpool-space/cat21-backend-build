@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CatsService = void 0;
+exports.buildSearchWhere = buildSearchWhere;
 const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const ordpool_parser_1 = require("ordpool-parser");
@@ -170,6 +171,43 @@ let CatsService = class CatsService {
             itemsPerPage,
         };
     }
+    async searchCatNumbers(filters, itemsPerPage, currentPage) {
+        const where = buildSearchWhere(filters);
+        const offset = (currentPage - 1) * itemsPerPage;
+        const [[totalRow], rows] = await Promise.all([
+            this.drizzle.db.select({ count: (0, drizzle_orm_1.count)() }).from(cats_1.cats).where(where),
+            this.drizzle.db
+                .select({ catNumber: cats_1.cats.catNumber })
+                .from(cats_1.cats)
+                .where(where)
+                .orderBy((0, drizzle_orm_1.desc)(cats_1.cats.catNumber))
+                .limit(itemsPerPage)
+                .offset(offset),
+        ]);
+        return {
+            catNumbers: rows.map((r) => r.catNumber),
+            total: totalRow.count,
+            currentPage,
+            itemsPerPage,
+        };
+    }
+    async randomCatNumber(filters) {
+        const where = buildSearchWhere(filters);
+        const [countRow] = await this.drizzle.db
+            .select({ count: (0, drizzle_orm_1.count)() })
+            .from(cats_1.cats)
+            .where(where);
+        if (countRow.count === 0)
+            return null;
+        const offset = Math.floor(Math.random() * countRow.count);
+        const [row] = await this.drizzle.db
+            .select({ catNumber: cats_1.cats.catNumber })
+            .from(cats_1.cats)
+            .where(where)
+            .limit(1)
+            .offset(offset);
+        return row?.catNumber ?? null;
+    }
     async ensureTotalsPrimed() {
         if (this.cache.getLastSyncedCatNumber() >= 0)
             return;
@@ -245,4 +283,55 @@ exports.CatsService = CatsService = __decorate([
         cache_service_1.CacheService,
         sync_service_1.SyncService])
 ], CatsService);
+function buildSearchWhere(filters) {
+    const clauses = [];
+    if (filters.eyes?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.laserEyes, filters.eyes));
+    if (filters.pose?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.designPose, filters.pose));
+    if (filters.expression?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.designExpression, filters.expression));
+    if (filters.pattern?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.designPattern, filters.pattern));
+    if (filters.background?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.background, filters.background));
+    if (filters.crown?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.crown, filters.crown));
+    if (filters.glasses?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.glasses, filters.glasses));
+    if (filters.color?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.dominantColorCategory, filters.color));
+    if (filters.gender?.length) {
+        const genderClauses = [];
+        if (filters.gender.includes('male'))
+            genderClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.male, true));
+        if (filters.gender.includes('female'))
+            genderClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.female, true));
+        if (genderClauses.length === 1) {
+            clauses.push(genderClauses[0]);
+        }
+        else if (genderClauses.length > 1) {
+            clauses.push((0, drizzle_orm_1.or)(...genderClauses));
+        }
+    }
+    if (filters.category?.length) {
+        const bandValues = filters.category.filter((c) => c !== 'genesis');
+        const categoryClauses = [];
+        if (bandValues.length > 0)
+            categoryClauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.category, bandValues));
+        if (filters.category.includes('genesis'))
+            categoryClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, true));
+        if (categoryClauses.length === 1) {
+            clauses.push(categoryClauses[0]);
+        }
+        else if (categoryClauses.length > 1) {
+            clauses.push((0, drizzle_orm_1.or)(...categoryClauses));
+        }
+    }
+    if (clauses.length === 0)
+        return undefined;
+    if (clauses.length === 1)
+        return clauses[0];
+    return (0, drizzle_orm_1.and)(...clauses);
+}
 //# sourceMappingURL=cats.service.js.map

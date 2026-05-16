@@ -1,8 +1,9 @@
+import { OnModuleInit } from '@nestjs/common';
 import { CacheService } from '../shared/cache/cache.service';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from './ord-client.service';
 export declare function deriveCategory(catNumber: number): string;
-export declare class SyncService {
+export declare class SyncService implements OnModuleInit {
     private readonly drizzle;
     private readonly ordClient;
     private readonly cache;
@@ -19,6 +20,8 @@ export declare class SyncService {
         lastErrorAt: Date | null;
         lastError: string | null;
     };
+    onModuleInit(): Promise<void>;
+    private backfillDominantColorCategory;
     handleSync(): Promise<void>;
     private getBlockHashCached;
     sync(): Promise<void>;

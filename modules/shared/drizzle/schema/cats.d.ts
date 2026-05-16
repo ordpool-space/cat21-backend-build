@@ -495,6 +495,23 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        dominantColorCategory: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "dominant_color_category";
+            tableName: "cats";
+            dataType: "string";
+            columnType: "MySqlVarChar";
+            data: string;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "mysql";
 }>;

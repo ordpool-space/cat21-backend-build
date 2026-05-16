@@ -58,6 +58,49 @@ let SyncService = SyncService_1 = class SyncService {
             lastError: this.lastError,
         };
     }
+    async onModuleInit() {
+        this.backfillDominantColorCategory().catch((e) => {
+            this.logger.warn(`Dominant-color backfill failed: ${e instanceof Error ? e.message : String(e)}`);
+        });
+    }
+    async backfillDominantColorCategory() {
+        const BACKFILL_BATCH = 500;
+        let total = 0;
+        while (true) {
+            const rows = await this.drizzle.db
+                .select({
+                catNumber: cats_1.cats.catNumber,
+                txHash: cats_1.cats.txHash,
+                blockHash: cats_1.cats.blockHash,
+                feeRate: cats_1.cats.feeRate,
+            })
+                .from(cats_1.cats)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.isNull)(cats_1.cats.dominantColorCategory), (0, drizzle_orm_1.eq)(cats_1.cats.genesis, false)))
+                .limit(BACKFILL_BATCH);
+            if (rows.length === 0)
+                break;
+            const byCategory = new Map();
+            for (const row of rows) {
+                const category = (0, ordpool_parser_1.getCatColorCategory)(row.txHash, row.blockHash, row.feeRate);
+                const bucket = byCategory.get(category) ?? [];
+                bucket.push(row.catNumber);
+                byCategory.set(category, bucket);
+            }
+            for (const [category, catNumbers] of byCategory) {
+                await this.drizzle.db
+                    .update(cats_1.cats)
+                    .set({ dominantColorCategory: category })
+                    .where((0, drizzle_orm_1.inArray)(cats_1.cats.catNumber, catNumbers));
+            }
+            total += rows.length;
+            this.logger.log(`Dominant-color backfill: updated ${total} cats so far`);
+            if (rows.length < BACKFILL_BATCH)
+                break;
+        }
+        if (total > 0) {
+            this.logger.log(`Dominant-color backfill complete: ${total} cats updated`);
+        }
+    }
     async handleSync() {
         await this.sync();
     }
@@ -116,6 +159,7 @@ let SyncService = SyncService_1 = class SyncService {
                     });
                     const traits = parsed?.getTraits();
                     const feeRate = detail.fee / (detail.weight / 4);
+                    const dominantColorCategory = (0, ordpool_parser_1.getCatColorCategory)(txid, blockHash, feeRate);
                     return {
                         catNumber: detail.number,
                         txHash: txid,
@@ -145,6 +189,7 @@ let SyncService = SyncService_1 = class SyncService {
                         crown: traits?.crown,
                         glasses: traits?.glasses,
                         glassesColors: traits?.glassesColors ?? [],
+                        dominantColorCategory,
                     };
                 });
                 await this.drizzle.db.insert(cats_1.cats).ignore().values(rows);

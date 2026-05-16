@@ -37,8 +37,9 @@ describe('deriveCategory', () => {
 });
 describe('SyncService', () => {
     function makeCat(n, height = 800000 + n) {
+        const hexId = n.toString(16).padStart(64, '0');
         return {
-            id: `hash${n}i0`,
+            id: `${hexId}i0`,
             number: n,
             address: 'bc1p...',
             sat: 100000 + n,
