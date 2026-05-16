@@ -20,7 +20,8 @@ const throttler_1 = require("@nestjs/throttler");
 const sharp = require("sharp");
 const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
-const CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
+const IMMUTABLE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
+const CAT_DETAIL_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
 let CatsController = class CatsController {
     constructor(catsService) {
         this.catsService = catsService;
@@ -45,7 +46,7 @@ let CatsController = class CatsController {
             reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
-        reply.header('Cache-Control', CACHE_CONTROL);
+        reply.header('Cache-Control', CAT_DETAIL_CACHE_CONTROL);
         return cat;
     }
     async getCatByTxHash(txHash, reply) {
@@ -58,7 +59,7 @@ let CatsController = class CatsController {
             reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat with tx ${txHash} not found`);
         }
-        reply.header('Cache-Control', CACHE_CONTROL);
+        reply.header('Cache-Control', CAT_DETAIL_CACHE_CONTROL);
         return cat;
     }
     async getCatSvg(catNumber, reply) {
@@ -68,7 +69,7 @@ let CatsController = class CatsController {
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
         return reply
-            .header('Cache-Control', CACHE_CONTROL)
+            .header('Cache-Control', IMMUTABLE_CACHE_CONTROL)
             .header('Content-Type', 'image/svg+xml')
             .header('Content-Disposition', `inline; filename="cat21-${catNumber}.svg"`)
             .send(svg);
@@ -85,7 +86,7 @@ let CatsController = class CatsController {
                 .webp({ lossless: true })
                 .toBuffer();
             return reply
-                .header('Cache-Control', CACHE_CONTROL)
+                .header('Cache-Control', IMMUTABLE_CACHE_CONTROL)
                 .header('Content-Type', 'image/webp')
                 .header('Content-Disposition', `inline; filename="cat21-${catNumber}.webp"`)
                 .send(webp);

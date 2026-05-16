@@ -33,6 +33,7 @@ function makeCatDto(catNumber, txHash) {
         glassesColors: [],
         rarityBits: null,
         rarityRank: null,
+        rarityCategoryTotal: null,
     };
 }
 describe('CacheService', () => {

@@ -45,7 +45,7 @@ describe('CatsController', () => {
             const reply = createMockReply();
             const result = await controller.getCatByNumber(0, reply);
             expect(result).toEqual(mockCat);
-            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=60, s-maxage=300');
         });
         it('should throw NotFoundException for unknown cat', async () => {
             service.getCatByNumber.mockResolvedValue(null);
@@ -59,7 +59,7 @@ describe('CatsController', () => {
             const reply = createMockReply();
             const result = await controller.getCatByTxHash(mockCat.txHash, reply);
             expect(result).toEqual(mockCat);
-            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=60, s-maxage=300');
         });
         it('should throw NotFoundException for unknown tx hash', async () => {
             service.getCatByTxHash.mockResolvedValue(null);

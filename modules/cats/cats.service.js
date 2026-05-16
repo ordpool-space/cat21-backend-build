@@ -279,6 +279,7 @@ let CatsService = class CatsService {
             glassesColors: row.glassesColors,
             rarityBits: row.rarityBits,
             rarityRank: row.rarityRank,
+            rarityCategoryTotal: categoryPopulation(row.category, this.cache.getLastSyncedCatNumber()),
         };
     }
 };
@@ -289,6 +290,26 @@ exports.CatsService = CatsService = __decorate([
         cache_service_1.CacheService,
         sync_service_1.SyncService])
 ], CatsService);
+function categoryPopulation(category, lastSynced) {
+    const RANGES = {
+        sub1k: [0, 999, 1000],
+        sub10k: [1000, 9999, 9000],
+        sub50k: [10000, 49999, 40000],
+        sub100k: [50000, 99999, 50000],
+        sub250k: [100000, 249999, 150000],
+        sub500k: [250000, 499999, 250000],
+        sub1M: [500000, 999999, 500000],
+    };
+    const range = RANGES[category];
+    if (!range)
+        return null;
+    const [min, max, full] = range;
+    if (lastSynced < min)
+        return 0;
+    if (lastSynced >= max)
+        return full;
+    return lastSynced - min + 1;
+}
 function buildSearchWhere(filters) {
     const clauses = [];
     if (filters.eyes?.length)

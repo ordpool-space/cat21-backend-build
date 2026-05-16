@@ -30,5 +30,6 @@ export declare const GENESIS_ROW: {
     glassesColors: never[];
     rarityBits: null;
     rarityRank: null;
+    rarityCategoryTotal: number;
 };
 export declare const GENESIS_DTO: CatDto;

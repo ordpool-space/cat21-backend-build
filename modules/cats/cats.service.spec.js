@@ -177,11 +177,13 @@ describe('CatsService', () => {
             const result = await service.getCatByNumber(0);
             expect(result.mintedBy).toBeNull();
         });
-        it('should map all 25 DTO fields', async () => {
+        it('should map all 26 DTO fields', async () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([genesis_cat_1.GENESIS_ROW]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const cache = new cache_service_1.CacheService();
+            cache.setTotals(63749, 63748);
+            const service = new cats_service_1.CatsService(drizzle, cache, createMockSync());
             const result = await service.getCatByNumber(0);
             expect(result).toEqual(genesis_cat_1.GENESIS_DTO);
         });
