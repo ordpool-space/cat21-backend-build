@@ -59,8 +59,10 @@ let SyncService = SyncService_1 = class SyncService {
         };
     }
     async onModuleInit() {
-        this.backfillDominantColorCategory().catch((e) => {
-            this.logger.warn(`Dominant-color backfill failed: ${e instanceof Error ? e.message : String(e)}`);
+        this.backfillDominantColorCategory()
+            .then(() => this.recomputeRarityForAllBands())
+            .catch((e) => {
+            this.logger.warn(`Boot-time backfill failed: ${e instanceof Error ? e.message : String(e)}`);
         });
     }
     async backfillDominantColorCategory() {
@@ -208,6 +210,11 @@ let SyncService = SyncService_1 = class SyncService {
             this.cache.setProofOfCatWork(Number(sumResult.proofOfCatWork ?? 0));
             this.logger.log(`Sync complete: ${insertedCount} new cats (synced up to #${remoteMax})`);
             this.lastSuccessAt = new Date();
+            if (insertedCount > 0) {
+                await this.recomputeRarityForAllBands().catch((e) => {
+                    this.logger.warn(`Rarity recompute after sync failed: ${e instanceof Error ? e.message : String(e)}`);
+                });
+            }
         }
         catch (error) {
             this.lastErrorAt = new Date();
@@ -218,6 +225,57 @@ let SyncService = SyncService_1 = class SyncService {
             this.blockHashCache.clear();
             this.syncing = false;
         }
+    }
+    async recomputeRarityForAllBands() {
+        const BANDS = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+        for (const band of BANDS) {
+            await this.recomputeRarityForBand(band);
+        }
+    }
+    async recomputeRarityForBand(band) {
+        const rows = await this.drizzle.db
+            .select({
+            catNumber: cats_1.cats.catNumber,
+            genesis: cats_1.cats.genesis,
+            gender: cats_1.cats.gender,
+            designPose: cats_1.cats.designPose,
+            designExpression: cats_1.cats.designExpression,
+            designPattern: cats_1.cats.designPattern,
+            designFacing: cats_1.cats.designFacing,
+            laserEyes: cats_1.cats.laserEyes,
+            background: cats_1.cats.background,
+            crown: cats_1.cats.crown,
+            glasses: cats_1.cats.glasses,
+            dominantColorCategory: cats_1.cats.dominantColorCategory,
+        })
+            .from(cats_1.cats)
+            .where((0, drizzle_orm_1.eq)(cats_1.cats.category, band));
+        if (rows.length === 0)
+            return;
+        const tokens = rows.map((r) => ({
+            id: r.catNumber,
+            attrs: {
+                genesis: r.genesis ? 'true' : 'false',
+                gender: r.gender,
+                pose: r.designPose,
+                expression: r.designExpression,
+                pattern: r.designPattern,
+                facing: r.designFacing,
+                eyes: r.laserEyes,
+                background: r.background,
+                crown: r.crown,
+                glasses: r.glasses,
+                color: r.dominantColorCategory ?? 'none',
+            },
+        }));
+        const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens);
+        for (const r of ranked) {
+            await this.drizzle.db
+                .update(cats_1.cats)
+                .set({ rarityBits: r.bits, rarityRank: r.rank })
+                .where((0, drizzle_orm_1.eq)(cats_1.cats.catNumber, r.id));
+        }
+        this.logger.log(`Rarity recomputed for band ${band}: ${ranked.length} cats ranked`);
     }
 };
 exports.SyncService = SyncService;

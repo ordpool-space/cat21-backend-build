@@ -25,4 +25,6 @@ export declare class SyncService implements OnModuleInit {
     handleSync(): Promise<void>;
     private getBlockHashCached;
     sync(): Promise<void>;
+    private recomputeRarityForAllBands;
+    private recomputeRarityForBand;
 }

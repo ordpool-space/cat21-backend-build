@@ -137,7 +137,7 @@ __decorate([
 ], CatSearchQueryDto.prototype, "genesis", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] } };
+        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] }, rarityBits: { required: true, type: () => Number, nullable: true }, rarityRank: { required: true, type: () => Number, nullable: true } };
     }
 }
 exports.CatDto = CatDto;
@@ -257,6 +257,20 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Colors used to paint the glasses (empty if no glasses)', example: [] }),
     __metadata("design:type", Array)
 ], CatDto.prototype, "glassesColors", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'OpenRarity information-content score for this cat within its category band (raw Σ -log₂(p_i)). Higher = rarer. Each band is scored independently.',
+        example: 23.4,
+    }),
+    __metadata("design:type", Object)
+], CatDto.prototype, "rarityBits", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: '1-based rarity rank within this cat\'s category band. Tied scores share a rank with classic 1-2-2-4 ordering.',
+        example: 17,
+    }),
+    __metadata("design:type", Object)
+], CatDto.prototype, "rarityRank", void 0);
 class CatsPaginatedResultDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { cats: { required: true, type: () => [require("./cat.dto").CatDto] }, total: { required: true, type: () => Number }, currentPage: { required: true, type: () => Number }, itemsPerPage: { required: true, type: () => Number } };

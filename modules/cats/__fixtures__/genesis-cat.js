@@ -30,6 +30,8 @@ exports.GENESIS_ROW = {
     crown: 'None',
     glasses: 'None',
     glassesColors: [],
+    rarityBits: null,
+    rarityRank: null,
 };
 exports.GENESIS_DTO = {
     ...exports.GENESIS_ROW,

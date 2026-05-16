@@ -40,6 +40,8 @@ export declare class CatDto {
     crown: string;
     glasses: string;
     glassesColors: string[];
+    rarityBits: number | null;
+    rarityRank: number | null;
 }
 export declare class CatsPaginatedResultDto {
     cats: CatDto[];

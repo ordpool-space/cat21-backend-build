@@ -28,5 +28,7 @@ export declare const GENESIS_ROW: {
     crown: string;
     glasses: string;
     glassesColors: never[];
+    rarityBits: null;
+    rarityRank: null;
 };
 export declare const GENESIS_DTO: CatDto;
