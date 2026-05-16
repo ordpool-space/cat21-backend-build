@@ -18,6 +18,11 @@ const cache_service_1 = require("../shared/cache/cache.service");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const cats_1 = require("../shared/drizzle/schema/cats");
 const sync_service_1 = require("../sync/sync.service");
+const RARITY_THRESHOLDS = {
+    top10: 10,
+    top100: 100,
+    top1k: 1000,
+};
 const SYNC_STALL_SECONDS = 300;
 let CatsService = class CatsService {
     constructor(drizzle, cache, sync) {
@@ -314,6 +319,14 @@ function buildSearchWhere(filters) {
             clauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, true));
         else if (wantsNormal && !wantsGenesis)
             clauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, false));
+    }
+    if (filters.rarity?.length) {
+        const thresholds = filters.rarity
+            .map((v) => RARITY_THRESHOLDS[v])
+            .filter((t) => t !== undefined);
+        if (thresholds.length > 0) {
+            clauses.push((0, drizzle_orm_1.lte)(cats_1.cats.rarityRank, Math.max(...thresholds)));
+        }
     }
     if (clauses.length === 0)
         return undefined;

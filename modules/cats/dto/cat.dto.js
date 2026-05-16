@@ -25,6 +25,7 @@ const CATEGORY_VALUES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub
 const GENDER_VALUES = ['Male', 'Female'];
 const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
 const GENESIS_VALUES = ['genesis', 'normal'];
+const RARITY_VALUES = ['top10', 'top100', 'top1k'];
 function csvOf(values) {
     const alts = values.map((v) => v.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')).join('|');
     return new RegExp(`^(?:${alts})(?:,(?:${alts}))*$`);
@@ -40,10 +41,11 @@ const CATEGORY_CSV = csvOf(CATEGORY_VALUES);
 const GENDER_CSV = csvOf(GENDER_VALUES);
 const COLOR_CSV = csvOf(COLOR_VALUES);
 const GENESIS_CSV = csvOf(GENESIS_VALUES);
+const RARITY_CSV = csvOf(RARITY_VALUES);
 const msg = (name, values) => `${name} must be a comma-separated list of: ${values.join(', ')}`;
 class CatSearchQueryDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" } };
+        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" }, rarity: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "RARITY_CSV" } };
     }
 }
 exports.CatSearchQueryDto = CatSearchQueryDto;
@@ -104,7 +106,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "glasses", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple bands OR-combine.', example: 'sub1k' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple categories OR-combine.', example: 'sub1k' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
@@ -135,6 +137,14 @@ __decorate([
     (0, class_validator_1.Matches)(GENESIS_CSV, { message: msg('genesis', GENESIS_VALUES) }),
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "genesis", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity rank ceiling within the active category: top10 (rank ≤ 10), top100 (≤ 100), top1k (≤ 1000). Multi-select takes the broadest ceiling.', example: 'top10' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(RARITY_CSV, { message: msg('rarity', RARITY_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "rarity", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] }, rarityBits: { required: true, type: () => Number, nullable: true }, rarityRank: { required: true, type: () => Number, nullable: true } };
