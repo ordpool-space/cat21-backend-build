@@ -94,6 +94,13 @@ let CacheService = CacheService_1 = class CacheService {
         this.catsByNumber.set(cat.catNumber, cat);
         this.txHashToNumber.set(cat.txHash, cat.catNumber);
     }
+    invalidateCat(catNumber) {
+        const cached = this.catsByNumber.get(catNumber);
+        if (cached) {
+            this.txHashToNumber.delete(cached.txHash);
+            this.catsByNumber.delete(catNumber);
+        }
+    }
     computeCatNumbersForPage(ipp, page) {
         if (this.lastSyncedCatNumber < 0)
             return [];

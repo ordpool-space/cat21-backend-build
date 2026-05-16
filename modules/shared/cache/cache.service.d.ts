@@ -16,6 +16,7 @@ export declare class CacheService implements OnModuleInit, OnModuleDestroy {
     getCachedCat(catNumber: number): CatDto | undefined;
     getCachedCatNumberByTxHash(txHash: string): number | undefined;
     setCachedCat(cat: CatDto): void;
+    invalidateCat(catNumber: number): void;
     computeCatNumbersForPage(ipp: number, page: number): number[];
     getTotalCatCount(): number;
     getLastSyncedCatNumber(): number;

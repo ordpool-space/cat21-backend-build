@@ -274,6 +274,7 @@ let SyncService = SyncService_1 = class SyncService {
                 .update(cats_1.cats)
                 .set({ rarityBits: r.bits, rarityRank: r.rank })
                 .where((0, drizzle_orm_1.eq)(cats_1.cats.catNumber, r.id));
+            this.cache.invalidateCat(r.id);
         }
         this.logger.log(`Rarity recomputed for band ${band}: ${ranked.length} cats ranked`);
     }
