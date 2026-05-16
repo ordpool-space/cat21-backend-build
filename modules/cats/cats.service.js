@@ -96,6 +96,7 @@ let CatsService = class CatsService {
         };
     }
     async getCatByNumber(catNumber) {
+        await this.ensureTotalsPrimed();
         const cached = this.cache.getCachedCat(catNumber);
         if (cached)
             return cached;
@@ -110,6 +111,7 @@ let CatsService = class CatsService {
         return dto;
     }
     async getCatByTxHash(txHash) {
+        await this.ensureTotalsPrimed();
         const catNumber = this.cache.getCachedCatNumberByTxHash(txHash);
         if (catNumber !== undefined) {
             const cached = this.cache.getCachedCat(catNumber);

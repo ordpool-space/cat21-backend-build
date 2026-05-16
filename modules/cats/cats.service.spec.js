@@ -56,12 +56,17 @@ describe('CatsService', () => {
             expect(result).toEqual({ totalCats: 0, lastSyncedCatNumber: -1, proofOfCatWork: 0 });
         });
     });
+    function primedCache() {
+        const cache = new cache_service_1.CacheService();
+        cache.setTotals(63749, 63748);
+        return cache;
+    }
     describe('getCatByNumber', () => {
         it('should return null when cat not found', async () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const service = new cats_service_1.CatsService(drizzle, primedCache(), createMockSync());
             const result = await service.getCatByNumber(999999);
             expect(result).toBeNull();
         });
@@ -69,7 +74,7 @@ describe('CatsService', () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([genesis_cat_1.GENESIS_ROW]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const service = new cats_service_1.CatsService(drizzle, primedCache(), createMockSync());
             const result = await service.getCatByNumber(0);
             expect(result).not.toBeNull();
             expect(result.catNumber).toBe(0);
@@ -83,7 +88,7 @@ describe('CatsService', () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const service = new cats_service_1.CatsService(drizzle, primedCache(), createMockSync());
             const result = await service.getCatByTxHash('0'.repeat(64));
             expect(result).toBeNull();
         });
@@ -91,7 +96,7 @@ describe('CatsService', () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([genesis_cat_1.GENESIS_ROW]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const service = new cats_service_1.CatsService(drizzle, primedCache(), createMockSync());
             const result = await service.getCatByTxHash(genesis_cat_1.GENESIS_ROW.txHash);
             expect(result).not.toBeNull();
             expect(result.catNumber).toBe(0);
@@ -173,7 +178,7 @@ describe('CatsService', () => {
             const drizzle = createMockDrizzle({
                 where: jest.fn().mockResolvedValue([row]),
             });
-            const service = new cats_service_1.CatsService(drizzle, new cache_service_1.CacheService(), createMockSync());
+            const service = new cats_service_1.CatsService(drizzle, primedCache(), createMockSync());
             const result = await service.getCatByNumber(0);
             expect(result.mintedBy).toBeNull();
         });
