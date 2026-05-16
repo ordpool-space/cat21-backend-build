@@ -268,7 +268,7 @@ let SyncService = SyncService_1 = class SyncService {
                 color: r.dominantColorCategory ?? 'none',
             },
         }));
-        const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens);
+        const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens, { tiebreaker: (a, b) => a - b });
         if (category === 'sub1k') {
             const i = ranked.findIndex((r) => r.id === 0);
             if (i > 0) {

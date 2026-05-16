@@ -22,6 +22,23 @@ const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
 const CAT_DETAIL_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
+const CATEGORY_FULL_SIZE = {
+    sub1k: 1000,
+    sub10k: 9000,
+    sub50k: 40000,
+    sub100k: 50000,
+    sub250k: 150000,
+    sub500k: 250000,
+    sub1M: 500000,
+};
+function cacheControlFor(cat) {
+    const max = CATEGORY_FULL_SIZE[cat.category];
+    const closed = cat.rarityRank !== null &&
+        cat.rarityCategoryTotal !== null &&
+        max !== undefined &&
+        cat.rarityCategoryTotal >= max;
+    return closed ? IMMUTABLE_CACHE_CONTROL : CAT_DETAIL_CACHE_CONTROL;
+}
 let CatsController = class CatsController {
     constructor(catsService) {
         this.catsService = catsService;
@@ -46,7 +63,7 @@ let CatsController = class CatsController {
             reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
-        reply.header('Cache-Control', CAT_DETAIL_CACHE_CONTROL);
+        reply.header('Cache-Control', cacheControlFor(cat));
         return cat;
     }
     async getCatByTxHash(txHash, reply) {
@@ -59,7 +76,7 @@ let CatsController = class CatsController {
             reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat with tx ${txHash} not found`);
         }
-        reply.header('Cache-Control', CAT_DETAIL_CACHE_CONTROL);
+        reply.header('Cache-Control', cacheControlFor(cat));
         return cat;
     }
     async getCatSvg(catNumber, reply) {
