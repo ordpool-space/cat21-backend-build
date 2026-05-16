@@ -60,7 +60,7 @@ let SyncService = SyncService_1 = class SyncService {
     }
     async onModuleInit() {
         this.backfillDominantColorCategory()
-            .then(() => this.recomputeRarityForAllBands())
+            .then(() => this.recomputeRarityForAllCategories())
             .catch((e) => {
             this.logger.warn(`Boot-time backfill failed: ${e instanceof Error ? e.message : String(e)}`);
         });
@@ -211,7 +211,7 @@ let SyncService = SyncService_1 = class SyncService {
             this.logger.log(`Sync complete: ${insertedCount} new cats (synced up to #${remoteMax})`);
             this.lastSuccessAt = new Date();
             if (insertedCount > 0) {
-                await this.recomputeRarityForAllBands().catch((e) => {
+                await this.recomputeRarityForAllCategories().catch((e) => {
                     this.logger.warn(`Rarity recompute after sync failed: ${e instanceof Error ? e.message : String(e)}`);
                 });
             }
@@ -226,13 +226,13 @@ let SyncService = SyncService_1 = class SyncService {
             this.syncing = false;
         }
     }
-    async recomputeRarityForAllBands() {
-        const BANDS = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
-        for (const band of BANDS) {
-            await this.recomputeRarityForBand(band);
+    async recomputeRarityForAllCategories() {
+        const CATEGORIES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+        for (const category of CATEGORIES) {
+            await this.recomputeRarityForCategory(category);
         }
     }
-    async recomputeRarityForBand(band) {
+    async recomputeRarityForCategory(category) {
         const rows = await this.drizzle.db
             .select({
             catNumber: cats_1.cats.catNumber,
@@ -249,7 +249,7 @@ let SyncService = SyncService_1 = class SyncService {
             dominantColorCategory: cats_1.cats.dominantColorCategory,
         })
             .from(cats_1.cats)
-            .where((0, drizzle_orm_1.eq)(cats_1.cats.category, band));
+            .where((0, drizzle_orm_1.eq)(cats_1.cats.category, category));
         if (rows.length === 0)
             return;
         const tokens = rows.map((r) => ({
@@ -269,7 +269,7 @@ let SyncService = SyncService_1 = class SyncService {
             },
         }));
         const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens);
-        if (band === 'sub1k') {
+        if (category === 'sub1k') {
             const i = ranked.findIndex((r) => r.id === 0);
             if (i > 0) {
                 const cat0 = ranked.splice(i, 1)[0];
@@ -284,7 +284,7 @@ let SyncService = SyncService_1 = class SyncService {
                 .where((0, drizzle_orm_1.eq)(cats_1.cats.catNumber, r.id));
             this.cache.invalidateCat(r.id);
         }
-        this.logger.log(`Rarity recomputed for band ${band}: ${ranked.length} cats ranked`);
+        this.logger.log(`Rarity recomputed for category ${category}: ${ranked.length} cats ranked`);
     }
 };
 exports.SyncService = SyncService;
