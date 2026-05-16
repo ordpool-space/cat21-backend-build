@@ -274,36 +274,19 @@ export declare const cats: import("drizzle-orm/mysql-core").MySqlTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        male: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "male";
+        gender: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "gender";
             tableName: "cats";
-            dataType: "boolean";
-            columnType: "MySqlBoolean";
-            data: boolean;
-            driverParam: number | boolean;
+            dataType: "string";
+            columnType: "MySqlVarChar";
+            data: string;
+            driverParam: string | number;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        female: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "female";
-            tableName: "cats";
-            dataType: "boolean";
-            columnType: "MySqlBoolean";
-            data: boolean;
-            driverParam: number | boolean;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
+            enumValues: [string, ...string[]];
             baseColumn: never;
             identity: undefined;
             generated: undefined;

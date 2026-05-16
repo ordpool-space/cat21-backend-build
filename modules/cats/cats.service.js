@@ -260,8 +260,7 @@ let CatsService = class CatsService {
             category: row.category,
             genesis: row.genesis,
             catColors: row.catColors,
-            male: row.male,
-            female: row.female,
+            gender: row.gender,
             designIndex: row.designIndex,
             designPose: row.designPose,
             designExpression: row.designExpression,
@@ -301,19 +300,8 @@ function buildSearchWhere(filters) {
         clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.glasses, filters.glasses));
     if (filters.color?.length)
         clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.dominantColorCategory, filters.color));
-    if (filters.gender?.length) {
-        const genderClauses = [];
-        if (filters.gender.includes('male'))
-            genderClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.male, true));
-        if (filters.gender.includes('female'))
-            genderClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.female, true));
-        if (genderClauses.length === 1) {
-            clauses.push(genderClauses[0]);
-        }
-        else if (genderClauses.length > 1) {
-            clauses.push((0, drizzle_orm_1.or)(...genderClauses));
-        }
-    }
+    if (filters.gender?.length)
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.gender, filters.gender));
     if (filters.category?.length) {
         const bandValues = filters.category.filter((c) => c !== 'genesis');
         const categoryClauses = [];

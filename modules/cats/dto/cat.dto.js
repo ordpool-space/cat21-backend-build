@@ -22,7 +22,7 @@ const BACKGROUND_VALUES = ['Block9', 'Cyberpunk', 'Whitepaper', 'Orange'];
 const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
 const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
 const CATEGORY_VALUES = ['genesis', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
-const GENDER_VALUES = ['male', 'female'];
+const GENDER_VALUES = ['Male', 'Female'];
 const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
 function csvOf(values) {
     const alts = values.map((v) => v.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')).join('|');
@@ -110,7 +110,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "category", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Gender: male, female', example: 'female' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Gender: Male, Female', example: 'Female' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
@@ -127,7 +127,7 @@ __decorate([
 ], CatSearchQueryDto.prototype, "color", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, male: { required: true, type: () => Boolean }, female: { required: true, type: () => Boolean }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] } };
+        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] } };
     }
 }
 exports.CatDto = CatDto;
@@ -196,13 +196,13 @@ __decorate([
     __metadata("design:type", Array)
 ], CatDto.prototype, "catColors", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Whether the cat is male (50% chance)', example: false }),
-    __metadata("design:type", Boolean)
-], CatDto.prototype, "male", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Whether the cat is female (50% chance)', example: true }),
-    __metadata("design:type", Boolean)
-], CatDto.prototype, "female", void 0);
+    (0, swagger_1.ApiProperty)({
+        description: 'Gender of the cat. Empty string for cats that have neither (rare edge case, e.g. some fixtures).',
+        enum: ['Female', 'Male', ''],
+        example: 'Female',
+    }),
+    __metadata("design:type", String)
+], CatDto.prototype, "gender", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Design index (0-127), combination of pose, expression, pattern, and facing', example: 24 }),
     __metadata("design:type", Number)

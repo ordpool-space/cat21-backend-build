@@ -27,8 +27,7 @@ export declare class CatDto {
     category: string;
     genesis: boolean;
     catColors: string[];
-    male: boolean;
-    female: boolean;
+    gender: string;
     designIndex: number;
     designPose: string;
     designExpression: string;

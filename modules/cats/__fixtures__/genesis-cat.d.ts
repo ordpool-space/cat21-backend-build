@@ -16,8 +16,7 @@ export declare const GENESIS_ROW: {
     category: string;
     genesis: boolean;
     catColors: string[];
-    male: boolean;
-    female: boolean;
+    gender: string;
     designIndex: number;
     designPose: string;
     designExpression: string;
