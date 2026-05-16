@@ -269,6 +269,14 @@ let SyncService = SyncService_1 = class SyncService {
             },
         }));
         const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens);
+        if (band === 'sub1k') {
+            const i = ranked.findIndex((r) => r.id === 0);
+            if (i > 0) {
+                const cat0 = ranked.splice(i, 1)[0];
+                ranked.unshift(cat0);
+                ranked.forEach((r, n) => { r.rank = n + 1; });
+            }
+        }
         for (const r of ranked) {
             await this.drizzle.db
                 .update(cats_1.cats)
