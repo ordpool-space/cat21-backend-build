@@ -303,18 +303,15 @@ function buildSearchWhere(filters) {
     if (filters.gender?.length)
         clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.gender, filters.gender));
     if (filters.category?.length) {
-        const bandValues = filters.category.filter((c) => c !== 'genesis');
-        const categoryClauses = [];
-        if (bandValues.length > 0)
-            categoryClauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.category, bandValues));
-        if (filters.category.includes('genesis'))
-            categoryClauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, true));
-        if (categoryClauses.length === 1) {
-            clauses.push(categoryClauses[0]);
-        }
-        else if (categoryClauses.length > 1) {
-            clauses.push((0, drizzle_orm_1.or)(...categoryClauses));
-        }
+        clauses.push((0, drizzle_orm_1.inArray)(cats_1.cats.category, filters.category));
+    }
+    if (filters.genesis?.length) {
+        const wantsGenesis = filters.genesis.includes('genesis');
+        const wantsNormal = filters.genesis.includes('normal');
+        if (wantsGenesis && !wantsNormal)
+            clauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, true));
+        else if (wantsNormal && !wantsGenesis)
+            clauses.push((0, drizzle_orm_1.eq)(cats_1.cats.genesis, false));
     }
     if (clauses.length === 0)
         return undefined;

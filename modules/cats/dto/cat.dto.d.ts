@@ -9,6 +9,7 @@ export declare class CatSearchQueryDto {
     category?: string;
     gender?: string;
     color?: string;
+    genesis?: string;
 }
 export declare class CatDto {
     id: string;

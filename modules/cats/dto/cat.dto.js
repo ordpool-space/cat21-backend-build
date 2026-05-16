@@ -21,9 +21,10 @@ const PATTERN_VALUES = ['Solid', 'Striped', 'Eyepatch', 'Half/Half'];
 const BACKGROUND_VALUES = ['Block9', 'Cyberpunk', 'Whitepaper', 'Orange'];
 const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
 const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
-const CATEGORY_VALUES = ['genesis', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+const CATEGORY_VALUES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
 const GENDER_VALUES = ['Male', 'Female'];
-const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink'];
+const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
+const GENESIS_VALUES = ['genesis', 'normal'];
 function csvOf(values) {
     const alts = values.map((v) => v.replace(/[.*+?^${}()|[\]\\\/]/g, '\\$&')).join('|');
     return new RegExp(`^(?:${alts})(?:,(?:${alts}))*$`);
@@ -38,10 +39,11 @@ const GLASSES_CSV = csvOf(GLASSES_VALUES);
 const CATEGORY_CSV = csvOf(CATEGORY_VALUES);
 const GENDER_CSV = csvOf(GENDER_VALUES);
 const COLOR_CSV = csvOf(COLOR_VALUES);
+const GENESIS_CSV = csvOf(GENESIS_VALUES);
 const msg = (name, values) => `${name} must be a comma-separated list of: ${values.join(', ')}`;
 class CatSearchQueryDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" } };
+        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" } };
     }
 }
 exports.CatSearchQueryDto = CatSearchQueryDto;
@@ -102,7 +104,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "glasses", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: genesis, sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple bands OR-combine.', example: 'sub1k' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple bands OR-combine.', example: 'sub1k' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
@@ -118,13 +120,21 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "gender", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Dominant body color bucket: red, orange, yellow, green, blue, purple, pink. Genesis cats have no body hue and never match.', example: 'red' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Dominant color bucket: red, orange, yellow, green, cyan, blue, purple, pink, black (genesis), white (genesis), fire (feeRate 69 sat/vB), saturated (feeRate 420 sat/vB).', example: 'red' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
     (0, class_validator_1.Matches)(COLOR_CSV, { message: msg('color', COLOR_VALUES) }),
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "color", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Origin: genesis (the 1-of-1 cat #0) or normal (everything else).', example: 'genesis' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(GENESIS_CSV, { message: msg('genesis', GENESIS_VALUES) }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "genesis", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] } };

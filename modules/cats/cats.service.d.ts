@@ -14,6 +14,7 @@ export interface SearchFilters {
     category?: string[];
     gender?: string[];
     color?: string[];
+    genesis?: string[];
 }
 export declare class CatsService {
     private readonly drizzle;

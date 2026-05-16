@@ -284,6 +284,7 @@ function toSearchFilters(q) {
         category: splitCsv(q.category),
         gender: splitCsv(q.gender),
         color: splitCsv(q.color),
+        genesis: splitCsv(q.genesis),
     };
 }
 function splitCsv(value) {

@@ -44,14 +44,19 @@ describe('buildSearchWhere', () => {
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub500k'] })).toBeDefined();
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub1M'] })).toBeDefined();
         });
-        it('translates the genesis category into a boolean equality clause', () => {
-            expect((0, cats_service_1.buildSearchWhere)({ category: ['genesis'] })).toBeDefined();
-        });
-        it('combines genesis + category in the same OR group', () => {
-            expect((0, cats_service_1.buildSearchWhere)({ category: ['genesis', 'sub1k'] })).toBeDefined();
-        });
         it('still returns a SQL clause for unknown category values (they just match nothing)', () => {
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub42k'] })).toBeDefined();
+        });
+    });
+    describe('genesis (ORIGIN trait)', () => {
+        it("translates 'genesis' alone to a boolean equality clause", () => {
+            expect((0, cats_service_1.buildSearchWhere)({ genesis: ['genesis'] })).toBeDefined();
+        });
+        it("translates 'normal' alone to a boolean equality clause", () => {
+            expect((0, cats_service_1.buildSearchWhere)({ genesis: ['normal'] })).toBeDefined();
+        });
+        it('returns undefined when both genesis+normal are selected (matches everything)', () => {
+            expect((0, cats_service_1.buildSearchWhere)({ genesis: ['genesis', 'normal'] })).toBeUndefined();
         });
     });
     describe('gender', () => {

@@ -75,7 +75,7 @@ let SyncService = SyncService_1 = class SyncService {
                 feeRate: cats_1.cats.feeRate,
             })
                 .from(cats_1.cats)
-                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.isNull)(cats_1.cats.dominantColorCategory), (0, drizzle_orm_1.eq)(cats_1.cats.genesis, false)))
+                .where((0, drizzle_orm_1.isNull)(cats_1.cats.dominantColorCategory))
                 .limit(BACKFILL_BATCH);
             if (rows.length === 0)
                 break;
