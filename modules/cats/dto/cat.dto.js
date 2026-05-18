@@ -23,7 +23,7 @@ const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
 const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
 const CATEGORY_VALUES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
 const GENDER_VALUES = ['Male', 'Female'];
-const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
+const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
 const GENESIS_VALUES = ['genesis', 'normal'];
 const RARITY_VALUES = ['top10', 'top100', 'top1k'];
 function csvOf(values) {
@@ -122,7 +122,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "gender", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Dominant color bucket: red, orange, yellow, green, cyan, blue, purple, pink, black (genesis), white (genesis), fire (feeRate 69 sat/vB), saturated (feeRate 420 sat/vB).', example: 'red' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Dominant color bucket: red, orange, yellow, green, blue, purple, pink, black (genesis), white (genesis), fire (feeRate 69 sat/vB), saturated (feeRate 420 sat/vB).', example: 'red' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
