@@ -294,7 +294,8 @@ exports.CatsService = CatsService = __decorate([
 ], CatsService);
 function categoryPopulation(category, lastSynced) {
     const RANGES = {
-        sub1k: [0, 999, 1000],
+        sub1: [0, 0, 1],
+        sub1k: [1, 999, 999],
         sub10k: [1000, 9999, 9000],
         sub50k: [10000, 49999, 40000],
         sub100k: [50000, 99999, 50000],

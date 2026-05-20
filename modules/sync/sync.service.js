@@ -22,6 +22,8 @@ const cats_1 = require("../shared/drizzle/schema/cats");
 const ord_client_service_1 = require("./ord-client.service");
 const BATCH_SIZE = 50;
 function deriveCategory(catNumber) {
+    if (catNumber < 1)
+        return 'sub1';
     if (catNumber < 1000)
         return 'sub1k';
     if (catNumber < 10000)
@@ -227,7 +229,7 @@ let SyncService = SyncService_1 = class SyncService {
         }
     }
     async recomputeRarityForAllCategories() {
-        const CATEGORIES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+        const CATEGORIES = ['sub1', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
         for (const category of CATEGORIES) {
             await this.recomputeRarityForCategory(category);
         }
@@ -269,14 +271,6 @@ let SyncService = SyncService_1 = class SyncService {
             },
         }));
         const ranked = (0, ordpool_parser_1.scoreAndRank)(tokens, { tiebreaker: (a, b) => a - b });
-        if (category === 'sub1k') {
-            const i = ranked.findIndex((r) => r.id === 0);
-            if (i > 0) {
-                const cat0 = ranked.splice(i, 1)[0];
-                ranked.unshift(cat0);
-                ranked.forEach((r, n) => { r.rank = n + 1; });
-            }
-        }
         for (const r of ranked) {
             await this.drizzle.db
                 .update(cats_1.cats)

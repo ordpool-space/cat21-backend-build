@@ -15,7 +15,7 @@ exports.GENESIS_ROW = {
     feeRate: 231.67,
     sat: 596964966600565,
     value: 546,
-    category: 'sub1k',
+    category: 'sub1',
     genesis: true,
     catColors: ['#000000'],
     gender: 'Male',
@@ -32,7 +32,7 @@ exports.GENESIS_ROW = {
     glassesColors: [],
     rarityBits: null,
     rarityRank: null,
-    rarityCategoryTotal: 1000,
+    rarityCategoryTotal: 1,
 };
 exports.GENESIS_DTO = {
     ...exports.GENESIS_ROW,

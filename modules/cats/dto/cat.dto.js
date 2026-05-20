@@ -21,7 +21,7 @@ const PATTERN_VALUES = ['Solid', 'Striped', 'Eyepatch', 'Half/Half'];
 const BACKGROUND_VALUES = ['Block9', 'Cyberpunk', 'Whitepaper', 'Orange'];
 const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
 const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
-const CATEGORY_VALUES = ['sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
+const CATEGORY_VALUES = ['sub1', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
 const GENDER_VALUES = ['Male', 'Female'];
 const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
 const GENESIS_VALUES = ['genesis', 'normal'];
@@ -106,7 +106,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "glasses", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple categories OR-combine.', example: 'sub1k' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Rarity category: sub1 (Genesis Cat only), sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M. Multiple categories OR-combine.', example: 'sub1k' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
@@ -204,7 +204,7 @@ __decorate([
     __metadata("design:type", Number)
 ], CatDto.prototype, "value", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Category based on cat number: sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M, or empty', example: 'sub1k' }),
+    (0, swagger_1.ApiProperty)({ description: 'Category based on cat number: sub1 (Genesis Cat only), sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M, or empty', example: 'sub1k' }),
     __metadata("design:type", String)
 ], CatDto.prototype, "category", void 0);
 __decorate([
@@ -283,8 +283,8 @@ __decorate([
 ], CatDto.prototype, "rarityRank", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Total cats currently in this cat\'s category. For closed categories (sub1k, sub10k, etc.) this is the fixed drop size. For open categories it grows with each new mint. Pairs with rarityRank to read as "rank N of M".',
-        example: 1000,
+        description: 'Total cats currently in this cat\'s category. For closed categories (sub1, sub1k, sub10k, etc.) this is the fixed drop size — `sub1` has size 1 (Genesis Cat only). For open categories it grows with each new mint. Pairs with rarityRank to read as "rank N of M".',
+        example: 999,
     }),
     __metadata("design:type", Object)
 ], CatDto.prototype, "rarityCategoryTotal", void 0);

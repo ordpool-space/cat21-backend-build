@@ -2,8 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const sync_service_1 = require("./sync.service");
 describe('deriveCategory', () => {
-    it('should return sub1k for cats 0-999', () => {
-        expect((0, sync_service_1.deriveCategory)(0)).toBe('sub1k');
+    it('should return sub1 for the Genesis Cat (cat #0) only', () => {
+        expect((0, sync_service_1.deriveCategory)(0)).toBe('sub1');
+    });
+    it('should return sub1k for cats 1-999', () => {
+        expect((0, sync_service_1.deriveCategory)(1)).toBe('sub1k');
         expect((0, sync_service_1.deriveCategory)(999)).toBe('sub1k');
     });
     it('should return sub10k for cats 1000-9999', () => {

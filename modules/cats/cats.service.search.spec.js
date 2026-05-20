@@ -36,6 +36,7 @@ describe('buildSearchWhere', () => {
     });
     describe('category', () => {
         it('translates a single sub-Nk category into a clause', () => {
+            expect((0, cats_service_1.buildSearchWhere)({ category: ['sub1'] })).toBeDefined();
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub1k'] })).toBeDefined();
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub10k'] })).toBeDefined();
             expect((0, cats_service_1.buildSearchWhere)({ category: ['sub50k'] })).toBeDefined();
