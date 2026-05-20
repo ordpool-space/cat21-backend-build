@@ -23,7 +23,8 @@ const cat_dto_1 = require("./dto/cat.dto");
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
 const CAT_DETAIL_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
 const CATEGORY_FULL_SIZE = {
-    sub1k: 1000,
+    sub1: 1,
+    sub1k: 999,
     sub10k: 9000,
     sub50k: 40000,
     sub100k: 50000,
