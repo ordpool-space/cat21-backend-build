@@ -204,7 +204,11 @@ __decorate([
     __metadata("design:type", Number)
 ], CatDto.prototype, "value", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Category based on cat number: sub1 (Genesis Cat only), sub1k, sub10k, sub50k, sub100k, sub250k, sub500k, sub1M, or empty', example: 'sub1k' }),
+    (0, swagger_1.ApiProperty)({
+        description: 'Category based on cat number. sub1 holds the Genesis Cat only; the rest partition cats 1..999 999 by smallest-applicable band. Empty string is reserved for cats >= 1 000 000 (the TBD band).',
+        enum: [...categories_1.CATEGORY_VALUES, ''],
+        example: 'sub1k',
+    }),
     __metadata("design:type", String)
 ], CatDto.prototype, "category", void 0);
 __decorate([
