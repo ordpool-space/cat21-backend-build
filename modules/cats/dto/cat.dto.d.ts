@@ -11,6 +11,7 @@ export declare class CatSearchQueryDto {
     color?: string;
     genesis?: string;
     rarity?: string;
+    sort?: string;
 }
 export declare class CatDto {
     id: string;
@@ -60,7 +61,10 @@ export declare class CatNumbersPaginatedResultDto {
 export type FacetCounts = Record<string, Record<string, number>>;
 export declare class CatSearchResultDto extends CatNumbersPaginatedResultDto {
     facets: FacetCounts;
+    categoryTotal: number | null;
 }
+export declare const CAT_SORT_VALUES: readonly ["newest", "rarity"];
+export type CatSort = typeof CAT_SORT_VALUES[number];
 export declare class StatusDto {
     totalCats: number;
     lastSyncedCatNumber: number;

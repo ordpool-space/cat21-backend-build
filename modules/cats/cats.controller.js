@@ -108,8 +108,8 @@ let CatsController = class CatsController {
     async getCats(itemsPerPage, currentPage) {
         return this.catsService.getCats(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
     }
-    async getCatNumbers(itemsPerPage, currentPage) {
-        return this.catsService.getCatNumbers(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
+    async getCatNumbers(itemsPerPage, currentPage, sort) {
+        return this.catsService.getCatNumbers(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage), sort === 'rarity' ? 'rarity' : 'newest');
     }
     async randomCat(query, reply) {
         reply.header('Cache-Control', 'no-store');
@@ -120,7 +120,7 @@ let CatsController = class CatsController {
         return { catNumber };
     }
     async searchCats(itemsPerPage, currentPage, query) {
-        return this.catsService.searchCatNumbers(toSearchFilters(query), Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
+        return this.catsService.searchCatNumbers(toSearchFilters(query), Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage), query.sort === 'rarity' ? 'rarity' : 'newest');
     }
 };
 exports.CatsController = CatsController;
@@ -223,16 +223,18 @@ __decorate([
 ], CatsController.prototype, "getCats", null);
 __decorate([
     (0, common_1.Get)('cats/numbers/:itemsPerPage/:currentPage'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat numbers', description: 'Returns only cat numbers (no traits), sorted by newest first. Max 100 items per page. Ideal for gallery views where only thumbnails are needed.' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat numbers', description: 'Returns only cat numbers (no traits). Default sort is newest-first (catNumber DESC); pass ?sort=rarity to order by global rarityBits DESC (rarest across the whole collection — the Genesis Cat first). Max 100 items per page.' }),
     (0, swagger_1.ApiParam)({ name: 'itemsPerPage', description: 'Number of cats per page (max 100)', example: 48 }),
     (0, swagger_1.ApiParam)({ name: 'currentPage', description: 'Page number (1-based)', example: 1 }),
+    (0, swagger_1.ApiQuery)({ name: 'sort', required: false, description: 'Sort order: "newest" (default) or "rarity".', enum: ['newest', 'rarity'] }),
     (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.CatNumbersPaginatedResultDto, description: 'Paginated list of cat numbers with total count' }),
     (0, swagger_1.ApiBadRequestResponse)({ description: 'itemsPerPage or currentPage is not a valid integer' }),
     openapi.ApiResponse({ status: 200, type: require("./dto/cat.dto").CatNumbersPaginatedResultDto }),
     __param(0, (0, common_1.Param)('itemsPerPage', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Param)('currentPage', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Query)('sort')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:paramtypes", [Number, Number, String]),
     __metadata("design:returntype", Promise)
 ], CatsController.prototype, "getCatNumbers", null);
 __decorate([

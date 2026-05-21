@@ -168,10 +168,25 @@ let CatsService = class CatsService {
             itemsPerPage,
         };
     }
-    async getCatNumbers(itemsPerPage, currentPage) {
+    async getCatNumbers(itemsPerPage, currentPage, sort = 'newest') {
         await this.ensureTotalsPrimed();
-        const catNumbers = this.cache.computeCatNumbersForPage(itemsPerPage, currentPage);
         const total = this.cache.getTotalCatCount();
+        if (sort === 'rarity') {
+            const offset = (currentPage - 1) * itemsPerPage;
+            const rows = await this.drizzle.db
+                .select({ catNumber: cats_1.cats.catNumber })
+                .from(cats_1.cats)
+                .orderBy((0, drizzle_orm_1.sql) `${cats_1.cats.rarityRank} IS NULL`, cats_1.cats.rarityRank, cats_1.cats.catNumber)
+                .limit(itemsPerPage)
+                .offset(offset);
+            return {
+                catNumbers: rows.map((r) => r.catNumber),
+                total,
+                currentPage,
+                itemsPerPage,
+            };
+        }
+        const catNumbers = this.cache.computeCatNumbersForPage(itemsPerPage, currentPage);
         return {
             catNumbers,
             total,
@@ -179,26 +194,33 @@ let CatsService = class CatsService {
             itemsPerPage,
         };
     }
-    async searchCatNumbers(filters, itemsPerPage, currentPage) {
+    async searchCatNumbers(filters, itemsPerPage, currentPage, sort = 'newest') {
+        await this.ensureTotalsPrimed();
         const where = buildSearchWhere(filters);
         const offset = (currentPage - 1) * itemsPerPage;
+        const orderClause = sort === 'rarity'
+            ? [(0, drizzle_orm_1.sql) `${cats_1.cats.rarityRank} IS NULL`, cats_1.cats.rarityRank, cats_1.cats.catNumber]
+            : [(0, drizzle_orm_1.desc)(cats_1.cats.catNumber)];
         const [[totalRow], rows, facets] = await Promise.all([
             this.drizzle.db.select({ count: (0, drizzle_orm_1.count)() }).from(cats_1.cats).where(where),
             this.drizzle.db
                 .select({ catNumber: cats_1.cats.catNumber })
                 .from(cats_1.cats)
                 .where(where)
-                .orderBy((0, drizzle_orm_1.desc)(cats_1.cats.catNumber))
+                .orderBy(...orderClause)
                 .limit(itemsPerPage)
                 .offset(offset),
             this.searchFacets(filters),
         ]);
+        const single = filters.category?.length === 1 ? filters.category[0] : null;
+        const categoryTotal = single ? categoryPopulation(single, this.cache.getLastSyncedCatNumber()) : null;
         return {
             catNumbers: rows.map((r) => r.catNumber),
             total: totalRow.count,
             currentPage,
             itemsPerPage,
             facets,
+            categoryTotal,
         };
     }
     async searchFacets(filters) {

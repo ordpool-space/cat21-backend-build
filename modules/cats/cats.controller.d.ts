@@ -12,7 +12,7 @@ export declare class CatsController {
     getCatSvg(catNumber: number, reply: FastifyReply): Promise<never>;
     getCatWebp(catNumber: number, reply: FastifyReply): Promise<never>;
     getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
-    getCatNumbers(itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
+    getCatNumbers(itemsPerPage: number, currentPage: number, sort?: string): Promise<CatNumbersPaginatedResultDto>;
     randomCat(query: CatSearchQueryDto, reply: FastifyReply): Promise<{
         catNumber: number;
     }>;

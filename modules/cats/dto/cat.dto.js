@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatSearchResultDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
+exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CAT_SORT_VALUES = exports.CatSearchResultDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
@@ -45,7 +45,7 @@ const RARITY_CSV = csvOf(RARITY_VALUES);
 const msg = (name, values) => `${name} must be a comma-separated list of: ${values.join(', ')}`;
 class CatSearchQueryDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" }, rarity: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "RARITY_CSV" } };
+        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" }, rarity: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "RARITY_CSV" }, sort: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "/^(newest|rarity)$/" } };
     }
 }
 exports.CatSearchQueryDto = CatSearchQueryDto;
@@ -145,6 +145,14 @@ __decorate([
     (0, class_validator_1.Matches)(RARITY_CSV, { message: msg('rarity', RARITY_VALUES) }),
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "rarity", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Sort order: "newest" (default, by catNumber DESC) or "rarity" (by rarityRank ASC inside the active category — rarest first).', example: 'rarity', enum: ['newest', 'rarity'] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
+    (0, class_validator_1.Matches)(/^(newest|rarity)$/, { message: 'sort must be "newest" or "rarity"' }),
+    __metadata("design:type", String)
+], CatSearchQueryDto.prototype, "sort", void 0);
 class CatDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, txHash: { required: true, type: () => String }, blockHash: { required: true, type: () => String }, blockHeight: { required: true, type: () => Number }, mintedAt: { required: true, type: () => String }, mintedBy: { required: true, type: () => String, nullable: true }, fee: { required: true, type: () => Number }, weight: { required: true, type: () => Number }, size: { required: true, type: () => Number }, feeRate: { required: true, type: () => Number }, sat: { required: true, type: () => Number }, value: { required: true, type: () => Number }, category: { required: true, type: () => String }, genesis: { required: true, type: () => Boolean }, catColors: { required: true, type: () => [String] }, gender: { required: true, type: () => String }, designIndex: { required: true, type: () => Number }, designPose: { required: true, type: () => String }, designExpression: { required: true, type: () => String }, designPattern: { required: true, type: () => String }, designFacing: { required: true, type: () => String }, laserEyes: { required: true, type: () => String }, background: { required: true, type: () => String }, backgroundColors: { required: true, type: () => [String] }, crown: { required: true, type: () => String }, glasses: { required: true, type: () => String }, glassesColors: { required: true, type: () => [String] }, rarityBits: { required: true, type: () => Number, nullable: true }, rarityRank: { required: true, type: () => Number, nullable: true }, rarityCategoryTotal: { required: true, type: () => Number, nullable: true } };
@@ -338,7 +346,7 @@ __decorate([
 ], CatNumbersPaginatedResultDto.prototype, "itemsPerPage", void 0);
 class CatSearchResultDto extends CatNumbersPaginatedResultDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { facets: { required: true, type: () => Object } };
+        return { facets: { required: true, type: () => Object }, categoryTotal: { required: true, type: () => Number, nullable: true } };
     }
 }
 exports.CatSearchResultDto = CatSearchResultDto;
@@ -356,6 +364,14 @@ __decorate([
     }),
     __metadata("design:type", Object)
 ], CatSearchResultDto.prototype, "facets", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Drop size of the active category when exactly one is selected — independent of the chip filters. Use to render "X of Y cats" and to hide rarity ceilings that exceed the band (e.g. top1k on sub1k). Null if the request did not pin a single category.',
+        example: 999,
+    }),
+    __metadata("design:type", Object)
+], CatSearchResultDto.prototype, "categoryTotal", void 0);
+exports.CAT_SORT_VALUES = ['newest', 'rarity'];
 class StatusDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number } };
