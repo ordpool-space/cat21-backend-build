@@ -18,12 +18,13 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
 const sharp = require("sharp");
+const categories_1 = require("../shared/categories");
 const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
 const CAT_DETAIL_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
 function cacheControlFor(cat) {
-    const range = cats_service_1.CATEGORY_RANGES[cat.category];
+    const range = categories_1.CATEGORY_RANGES[cat.category];
     const closed = cat.rarityRank !== null &&
         cat.rarityCategoryTotal !== null &&
         range !== undefined &&

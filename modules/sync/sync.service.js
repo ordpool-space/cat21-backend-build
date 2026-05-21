@@ -10,36 +10,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var SyncService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SyncService = void 0;
-exports.deriveCategory = deriveCategory;
+exports.SyncService = exports.deriveCategory = void 0;
 const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const drizzle_orm_1 = require("drizzle-orm");
 const ordpool_parser_1 = require("ordpool-parser");
 const cache_service_1 = require("../shared/cache/cache.service");
+const categories_1 = require("../shared/categories");
+Object.defineProperty(exports, "deriveCategory", { enumerable: true, get: function () { return categories_1.deriveCategory; } });
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const cats_1 = require("../shared/drizzle/schema/cats");
 const ord_client_service_1 = require("./ord-client.service");
 const BATCH_SIZE = 50;
-function deriveCategory(catNumber) {
-    if (catNumber < 1)
-        return 'sub1';
-    if (catNumber < 1000)
-        return 'sub1k';
-    if (catNumber < 10000)
-        return 'sub10k';
-    if (catNumber < 50000)
-        return 'sub50k';
-    if (catNumber < 100000)
-        return 'sub100k';
-    if (catNumber < 250000)
-        return 'sub250k';
-    if (catNumber < 500000)
-        return 'sub500k';
-    if (catNumber < 1000000)
-        return 'sub1M';
-    return '';
-}
 let SyncService = SyncService_1 = class SyncService {
     constructor(drizzle, ordClient, cache) {
         this.drizzle = drizzle;
@@ -177,7 +159,7 @@ let SyncService = SyncService_1 = class SyncService {
                         feeRate,
                         sat: detail.sat,
                         value: detail.value,
-                        category: deriveCategory(detail.number),
+                        category: (0, categories_1.deriveCategory)(detail.number),
                         genesis: traits?.genesis ?? false,
                         catColors: traits?.catColors ?? [],
                         gender: traits?.gender ?? '',
@@ -229,8 +211,7 @@ let SyncService = SyncService_1 = class SyncService {
         }
     }
     async recomputeRarityForAllCategories() {
-        const CATEGORIES = ['sub1', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
-        for (const category of CATEGORIES) {
+        for (const category of categories_1.CATEGORIES) {
             await this.recomputeRarityForCategory(category);
         }
     }

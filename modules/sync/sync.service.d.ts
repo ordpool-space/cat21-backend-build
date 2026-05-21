@@ -1,8 +1,9 @@
 import { OnModuleInit } from '@nestjs/common';
 import { CacheService } from '../shared/cache/cache.service';
+import { deriveCategory } from '../shared/categories';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from './ord-client.service';
-export declare function deriveCategory(catNumber: number): string;
+export { deriveCategory };
 export declare class SyncService implements OnModuleInit {
     private readonly drizzle;
     private readonly ordClient;

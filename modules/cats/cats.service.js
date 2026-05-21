@@ -9,12 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CATEGORY_RANGES = exports.CatsService = void 0;
+exports.CatsService = void 0;
 exports.buildSearchWhere = buildSearchWhere;
 const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const ordpool_parser_1 = require("ordpool-parser");
 const cache_service_1 = require("../shared/cache/cache.service");
+const categories_1 = require("../shared/categories");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const cats_1 = require("../shared/drizzle/schema/cats");
 const sync_service_1 = require("../sync/sync.service");
@@ -292,18 +293,8 @@ exports.CatsService = CatsService = __decorate([
         cache_service_1.CacheService,
         sync_service_1.SyncService])
 ], CatsService);
-exports.CATEGORY_RANGES = {
-    sub1: [0, 0, 1],
-    sub1k: [1, 999, 999],
-    sub10k: [1000, 9999, 9000],
-    sub50k: [10000, 49999, 40000],
-    sub100k: [50000, 99999, 50000],
-    sub250k: [100000, 249999, 150000],
-    sub500k: [250000, 499999, 250000],
-    sub1M: [500000, 999999, 500000],
-};
 function categoryPopulation(category, lastSynced) {
-    const range = exports.CATEGORY_RANGES[category];
+    const range = categories_1.CATEGORY_RANGES[category];
     if (!range)
         return null;
     const [min, max, full] = range;

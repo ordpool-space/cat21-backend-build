@@ -13,6 +13,7 @@ exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = 
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
+const categories_1 = require("../../shared/categories");
 const FILTER_MAX_LENGTH = 200;
 const EYES_VALUES = ['Orange', 'Red', 'Green', 'Blue', 'None'];
 const POSE_VALUES = ['Standing', 'Sleeping', 'Pouncing', 'Stalking'];
@@ -21,7 +22,6 @@ const PATTERN_VALUES = ['Solid', 'Striped', 'Eyepatch', 'Half/Half'];
 const BACKGROUND_VALUES = ['Block9', 'Cyberpunk', 'Whitepaper', 'Orange'];
 const CROWN_VALUES = ['Gold', 'Diamond', 'None'];
 const GLASSES_VALUES = ['Black', 'Cool', '3D', 'Nouns', 'None'];
-const CATEGORY_VALUES = ['sub1', 'sub1k', 'sub10k', 'sub50k', 'sub100k', 'sub250k', 'sub500k', 'sub1M'];
 const GENDER_VALUES = ['Male', 'Female'];
 const COLOR_VALUES = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'black', 'white', 'fire', 'saturated'];
 const GENESIS_VALUES = ['genesis', 'normal'];
@@ -37,7 +37,7 @@ const PATTERN_CSV = csvOf(PATTERN_VALUES);
 const BACKGROUND_CSV = csvOf(BACKGROUND_VALUES);
 const CROWN_CSV = csvOf(CROWN_VALUES);
 const GLASSES_CSV = csvOf(GLASSES_VALUES);
-const CATEGORY_CSV = csvOf(CATEGORY_VALUES);
+const CATEGORY_CSV = csvOf(categories_1.CATEGORY_VALUES);
 const GENDER_CSV = csvOf(GENDER_VALUES);
 const COLOR_CSV = csvOf(COLOR_VALUES);
 const GENESIS_CSV = csvOf(GENESIS_VALUES);
@@ -110,7 +110,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
-    (0, class_validator_1.Matches)(CATEGORY_CSV, { message: msg('category', CATEGORY_VALUES) }),
+    (0, class_validator_1.Matches)(CATEGORY_CSV, { message: msg('category', categories_1.CATEGORY_VALUES) }),
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "category", void 0);
 __decorate([
