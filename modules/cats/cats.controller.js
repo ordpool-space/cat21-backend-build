@@ -22,22 +22,12 @@ const cats_service_1 = require("./cats.service");
 const cat_dto_1 = require("./dto/cat.dto");
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=86400, s-maxage=31536000, immutable';
 const CAT_DETAIL_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
-const CATEGORY_FULL_SIZE = {
-    sub1: 1,
-    sub1k: 999,
-    sub10k: 9000,
-    sub50k: 40000,
-    sub100k: 50000,
-    sub250k: 150000,
-    sub500k: 250000,
-    sub1M: 500000,
-};
 function cacheControlFor(cat) {
-    const max = CATEGORY_FULL_SIZE[cat.category];
+    const range = cats_service_1.CATEGORY_RANGES[cat.category];
     const closed = cat.rarityRank !== null &&
         cat.rarityCategoryTotal !== null &&
-        max !== undefined &&
-        cat.rarityCategoryTotal >= max;
+        range !== undefined &&
+        cat.rarityCategoryTotal >= range[2];
     return closed ? IMMUTABLE_CACHE_CONTROL : CAT_DETAIL_CACHE_CONTROL;
 }
 let CatsController = class CatsController {

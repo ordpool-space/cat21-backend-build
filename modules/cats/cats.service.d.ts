@@ -36,4 +36,5 @@ export declare class CatsService {
     getCatSvg(catNumber: number): Promise<string | null>;
     private mapToDto;
 }
+export declare const CATEGORY_RANGES: Record<string, [number, number, number]>;
 export declare function buildSearchWhere(filters: SearchFilters): SQL | undefined;
