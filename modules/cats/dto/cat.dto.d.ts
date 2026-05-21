@@ -57,6 +57,10 @@ export declare class CatNumbersPaginatedResultDto {
     currentPage: number;
     itemsPerPage: number;
 }
+export type FacetCounts = Record<string, Record<string, number>>;
+export declare class CatSearchResultDto extends CatNumbersPaginatedResultDto {
+    facets: FacetCounts;
+}
 export declare class StatusDto {
     totalCats: number;
     lastSyncedCatNumber: number;

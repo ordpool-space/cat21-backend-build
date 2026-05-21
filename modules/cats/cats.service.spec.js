@@ -263,5 +263,45 @@ describe('CatsService', () => {
             expect(result.database.error.length).toBe(200);
         });
     });
+    describe('searchFacets', () => {
+        function createChainableDb(resolvedTo = []) {
+            const newChain = () => {
+                const chain = {};
+                chain.select = jest.fn().mockReturnValue(chain);
+                chain.from = jest.fn().mockReturnValue(chain);
+                chain.where = jest.fn().mockReturnValue(chain);
+                chain.orderBy = jest.fn().mockReturnValue(chain);
+                chain.limit = jest.fn().mockReturnValue(chain);
+                chain.offset = jest.fn().mockReturnValue(chain);
+                chain.groupBy = jest.fn().mockReturnValue(chain);
+                chain.then = (resolve) => resolve(resolvedTo);
+                return chain;
+            };
+            const root = {};
+            root.select = jest.fn().mockImplementation(() => newChain());
+            return root;
+        }
+        it('returns a facet record for every search dimension', async () => {
+            const db = createChainableDb([]);
+            const service = new cats_service_1.CatsService({ db }, new cache_service_1.CacheService(), createMockSync());
+            const facets = await service.searchFacets({});
+            expect(Object.keys(facets).sort()).toEqual(['background', 'category', 'color', 'crown', 'expression', 'eyes', 'gender', 'genesis', 'glasses', 'pattern', 'pose', 'rarity'].sort());
+        });
+        it('rarity facet exposes the three top-N labels', async () => {
+            const db = createChainableDb([{ count: 0 }]);
+            const service = new cats_service_1.CatsService({ db }, new cache_service_1.CacheService(), createMockSync());
+            const facets = await service.searchFacets({});
+            expect(Object.keys(facets.rarity).sort()).toEqual(['top100', 'top10', 'top1k'].sort());
+        });
+        it('genesis facet maps boolean rows to genesis/normal URL labels', async () => {
+            const db = createChainableDb([
+                { value: true, count: 1 },
+                { value: false, count: 152 },
+            ]);
+            const service = new cats_service_1.CatsService({ db }, new cache_service_1.CacheService(), createMockSync());
+            const facets = await service.searchFacets({});
+            expect(facets.genesis).toEqual({ genesis: 1, normal: 152 });
+        });
+    });
 });
 //# sourceMappingURL=cats.service.spec.js.map

@@ -2,7 +2,7 @@ import { type SQL } from 'drizzle-orm';
 import { CacheService } from '../shared/cache/cache.service';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { SyncService } from '../sync/sync.service';
-import { CatDto, CatNumbersPaginatedResultDto, CatsPaginatedResultDto, ExtendedHealthDto, HealthDto, StatusDto } from './dto/cat.dto';
+import { CatDto, CatNumbersPaginatedResultDto, CatSearchResultDto, CatsPaginatedResultDto, ExtendedHealthDto, FacetCounts, HealthDto, StatusDto } from './dto/cat.dto';
 export interface SearchFilters {
     eyes?: string[];
     pose?: string[];
@@ -30,7 +30,8 @@ export declare class CatsService {
     getCatByTxHash(txHash: string): Promise<CatDto | null>;
     getCats(itemsPerPage: number, currentPage: number): Promise<CatsPaginatedResultDto>;
     getCatNumbers(itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
-    searchCatNumbers(filters: SearchFilters, itemsPerPage: number, currentPage: number): Promise<CatNumbersPaginatedResultDto>;
+    searchCatNumbers(filters: SearchFilters, itemsPerPage: number, currentPage: number): Promise<CatSearchResultDto>;
+    searchFacets(filters: SearchFilters): Promise<FacetCounts>;
     randomCatNumber(filters: SearchFilters): Promise<number | null>;
     private ensureTotalsPrimed;
     getCatSvg(catNumber: number): Promise<string | null>;

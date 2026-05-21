@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
+exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CatSearchResultDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
@@ -336,6 +336,26 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Number of cats per page', example: 48 }),
     __metadata("design:type", Number)
 ], CatNumbersPaginatedResultDto.prototype, "itemsPerPage", void 0);
+class CatSearchResultDto extends CatNumbersPaginatedResultDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { facets: { required: true, type: () => Object } };
+    }
+}
+exports.CatSearchResultDto = CatSearchResultDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Facet counts. facets[dim][value] = how many cats match if the user added (dim=value) to their selection. Use to hide impossible chips and show counts next to live ones.',
+        example: {
+            color: { red: 153, orange: 4633, yellow: 11332 },
+            eyes: { Orange: 71, Red: 12, Green: 0, Blue: 0, None: 70 },
+            category: { sub1: 0, sub1k: 8, sub10k: 145 },
+            genesis: { genesis: 1, normal: 152 },
+            rarity: { top10: 1, top100: 5, top1k: 32 },
+        },
+        additionalProperties: { type: 'object', additionalProperties: { type: 'number' } },
+    }),
+    __metadata("design:type", Object)
+], CatSearchResultDto.prototype, "facets", void 0);
 class StatusDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number } };

@@ -182,7 +182,7 @@ let CatsService = class CatsService {
     async searchCatNumbers(filters, itemsPerPage, currentPage) {
         const where = buildSearchWhere(filters);
         const offset = (currentPage - 1) * itemsPerPage;
-        const [[totalRow], rows] = await Promise.all([
+        const [[totalRow], rows, facets] = await Promise.all([
             this.drizzle.db.select({ count: (0, drizzle_orm_1.count)() }).from(cats_1.cats).where(where),
             this.drizzle.db
                 .select({ catNumber: cats_1.cats.catNumber })
@@ -191,13 +191,71 @@ let CatsService = class CatsService {
                 .orderBy((0, drizzle_orm_1.desc)(cats_1.cats.catNumber))
                 .limit(itemsPerPage)
                 .offset(offset),
+            this.searchFacets(filters),
         ]);
         return {
             catNumbers: rows.map((r) => r.catNumber),
             total: totalRow.count,
             currentPage,
             itemsPerPage,
+            facets,
         };
+    }
+    async searchFacets(filters) {
+        const columnFacets = [
+            { key: 'eyes', column: cats_1.cats.laserEyes },
+            { key: 'pose', column: cats_1.cats.designPose },
+            { key: 'expression', column: cats_1.cats.designExpression },
+            { key: 'pattern', column: cats_1.cats.designPattern },
+            { key: 'background', column: cats_1.cats.background },
+            { key: 'crown', column: cats_1.cats.crown },
+            { key: 'glasses', column: cats_1.cats.glasses },
+            { key: 'color', column: cats_1.cats.dominantColorCategory },
+            { key: 'gender', column: cats_1.cats.gender },
+            { key: 'category', column: cats_1.cats.category },
+        ];
+        const columnPromises = columnFacets.map(async ({ key, column }) => {
+            const where = buildSearchWhere({ ...filters, [key]: undefined });
+            const rows = await this.drizzle.db
+                .select({ value: column, count: (0, drizzle_orm_1.count)() })
+                .from(cats_1.cats)
+                .where(where)
+                .groupBy(column);
+            const counts = {};
+            for (const r of rows) {
+                if (r.value !== null && r.value !== '')
+                    counts[r.value] = r.count;
+            }
+            return [key, counts];
+        });
+        const genesisPromise = (async () => {
+            const where = buildSearchWhere({ ...filters, genesis: undefined });
+            const rows = await this.drizzle.db
+                .select({ value: cats_1.cats.genesis, count: (0, drizzle_orm_1.count)() })
+                .from(cats_1.cats)
+                .where(where)
+                .groupBy(cats_1.cats.genesis);
+            const counts = {};
+            for (const r of rows)
+                counts[r.value ? 'genesis' : 'normal'] = r.count;
+            return ['genesis', counts];
+        })();
+        const rarityPromise = (async () => {
+            const baseWhere = buildSearchWhere({ ...filters, rarity: undefined });
+            const entries = await Promise.all(Object.entries(RARITY_THRESHOLDS).map(async ([label, threshold]) => {
+                const clause = baseWhere
+                    ? (0, drizzle_orm_1.and)(baseWhere, (0, drizzle_orm_1.lte)(cats_1.cats.rarityRank, threshold))
+                    : (0, drizzle_orm_1.lte)(cats_1.cats.rarityRank, threshold);
+                const [row] = await this.drizzle.db
+                    .select({ count: (0, drizzle_orm_1.count)() })
+                    .from(cats_1.cats)
+                    .where(clause);
+                return [label, row?.count ?? 0];
+            }));
+            return ['rarity', Object.fromEntries(entries)];
+        })();
+        const all = await Promise.all([...columnPromises, genesisPromise, rarityPromise]);
+        return Object.fromEntries(all);
     }
     async randomCatNumber(filters) {
         const where = buildSearchWhere(filters);
