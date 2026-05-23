@@ -34,6 +34,10 @@ export declare class CatsService {
     searchFacets(filters: SearchFilters): Promise<FacetCounts>;
     randomCatNumber(filters: SearchFilters): Promise<number | null>;
     private ensureTotalsPrimed;
+    findSamplesByFeeRate(rates: number[]): Promise<{
+        feeRate: number;
+        catNumber: number | null;
+    }[]>;
     getCatSvg(catNumber: number): Promise<string | null>;
     private mapToDto;
 }

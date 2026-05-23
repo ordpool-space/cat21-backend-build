@@ -1,6 +1,6 @@
 import type { FastifyReply } from 'fastify';
 import { CatsService } from './cats.service';
-import { CatDto, CatNumbersPaginatedResultDto, CatSearchQueryDto, CatSearchResultDto, CatsPaginatedResultDto, ExtendedHealthDto, HealthDto, StatusDto } from './dto/cat.dto';
+import { CatDto, CatNumbersPaginatedResultDto, CatSearchQueryDto, CatSearchResultDto, CatsPaginatedResultDto, ExtendedHealthDto, FeeRateSampleDto, HealthDto, StatusDto } from './dto/cat.dto';
 export declare class CatsController {
     private readonly catsService;
     constructor(catsService: CatsService);
@@ -17,4 +17,5 @@ export declare class CatsController {
         catNumber: number;
     }>;
     searchCats(itemsPerPage: number, currentPage: number, query: CatSearchQueryDto): Promise<CatSearchResultDto>;
+    sampleCatsByFeeRate(rates?: string): Promise<FeeRateSampleDto[]>;
 }

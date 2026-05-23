@@ -65,6 +65,10 @@ export declare class CatSearchResultDto extends CatNumbersPaginatedResultDto {
 }
 export declare const CAT_SORT_VALUES: readonly ["newest", "rarity"];
 export type CatSort = typeof CAT_SORT_VALUES[number];
+export declare class FeeRateSampleDto {
+    feeRate: number;
+    catNumber: number | null;
+}
 export declare class StatusDto {
     totalCats: number;
     lastSyncedCatNumber: number;

@@ -309,6 +309,22 @@ let CatsService = class CatsService {
         this.cache.setTotals(result.totalCats, result.lastSyncedCatNumber ?? -1);
         this.cache.setProofOfCatWork(Number(result.proofOfCatWork ?? 0));
     }
+    async findSamplesByFeeRate(rates) {
+        if (rates.length === 0)
+            return [];
+        const tolerance = 0.5;
+        return Promise.all(rates.map(async (rate) => {
+            const lo = rate - tolerance;
+            const hi = rate + tolerance;
+            const [row] = await this.drizzle.db
+                .select({ catNumber: cats_1.cats.catNumber })
+                .from(cats_1.cats)
+                .where((0, drizzle_orm_1.sql) `${cats_1.cats.feeRate} >= ${lo} AND ${cats_1.cats.feeRate} < ${hi}`)
+                .orderBy((0, drizzle_orm_1.sql) `ABS(${cats_1.cats.feeRate} - ${rate}) ASC`)
+                .limit(1);
+            return { feeRate: rate, catNumber: row?.catNumber ?? null };
+        }));
+    }
     async getCatSvg(catNumber) {
         const [row] = await this.drizzle.db
             .select({

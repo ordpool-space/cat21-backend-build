@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.CAT_SORT_VALUES = exports.CatSearchResultDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
+exports.ExtendedHealthDto = exports.SyncHealthDto = exports.DatabaseHealthDto = exports.HealthDto = exports.CacheStatsDto = exports.StatusDto = exports.FeeRateSampleDto = exports.CAT_SORT_VALUES = exports.CatSearchResultDto = exports.CatNumbersPaginatedResultDto = exports.CatsPaginatedResultDto = exports.CatDto = exports.CatSearchQueryDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
@@ -372,6 +372,20 @@ __decorate([
     __metadata("design:type", Object)
 ], CatSearchResultDto.prototype, "categoryTotal", void 0);
 exports.CAT_SORT_VALUES = ['newest', 'rarity'];
+class FeeRateSampleDto {
+    static _OPENAPI_METADATA_FACTORY() {
+        return { feeRate: { required: true, type: () => Number }, catNumber: { required: true, type: () => Number, nullable: true } };
+    }
+}
+exports.FeeRateSampleDto = FeeRateSampleDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Requested fee rate (sat/vB)', example: 75 }),
+    __metadata("design:type", Number)
+], FeeRateSampleDto.prototype, "feeRate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Cat number of the closest match within ±0.5 sat/vB, or null when no cat falls in that window', example: 12345, nullable: true }),
+    __metadata("design:type", Object)
+], FeeRateSampleDto.prototype, "catNumber", void 0);
 class StatusDto {
     static _OPENAPI_METADATA_FACTORY() {
         return { totalCats: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number } };

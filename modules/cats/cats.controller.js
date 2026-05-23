@@ -122,6 +122,18 @@ let CatsController = class CatsController {
     async searchCats(itemsPerPage, currentPage, query) {
         return this.catsService.searchCatNumbers(toSearchFilters(query), Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage), query.sort === 'rarity' ? 'rarity' : 'newest');
     }
+    async sampleCatsByFeeRate(rates) {
+        if (!rates)
+            return [];
+        const parsed = rates
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .slice(0, 200)
+            .map((s) => Number(s))
+            .filter((n) => Number.isFinite(n) && n >= 0);
+        return this.catsService.findSamplesByFeeRate(parsed);
+    }
 };
 exports.CatsController = CatsController;
 __decorate([
@@ -283,6 +295,23 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number, cat_dto_1.CatSearchQueryDto]),
     __metadata("design:returntype", Promise)
 ], CatsController.prototype, "searchCats", null);
+__decorate([
+    (0, common_1.Get)('cats/debug/samples-by-feerate'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Sample cats by fee rate (debug)',
+        description: 'For each fee rate in the `rates` query parameter, returns the cat ' +
+            'closest to that rate within ±0.5 sat/vB. Used by the frontend color ' +
+            'debug page to anchor each fee-rate row to a real minted cat.',
+    }),
+    (0, swagger_1.ApiQuery)({ name: 'rates', description: 'Comma-separated list of fee rates (sat/vB), max 200 entries', example: '1,2,5,10,69,75,420,600' }),
+    (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.FeeRateSampleDto, isArray: true }),
+    (0, swagger_1.ApiBadRequestResponse)({ description: 'rates query is missing, malformed, or has more than 200 entries' }),
+    openapi.ApiResponse({ status: 200, type: [require("./dto/cat.dto").FeeRateSampleDto] }),
+    __param(0, (0, common_1.Query)('rates')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "sampleCatsByFeeRate", null);
 exports.CatsController = CatsController = __decorate([
     (0, swagger_1.ApiTags)('api'),
     (0, common_1.Controller)('api'),
