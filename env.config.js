@@ -48,9 +48,7 @@ __decorate([
     __metadata("design:type", String)
 ], EnvironmentVariables.prototype, "ORD_API_URL", void 0);
 function validate(config) {
-    const validated = (0, class_transformer_1.plainToClass)(EnvironmentVariables, config, {
-        enableImplicitConversion: true,
-    });
+    const validated = (0, class_transformer_1.plainToClass)(EnvironmentVariables, config);
     const errors = (0, class_validator_1.validateSync)(validated, {
         skipMissingProperties: false,
         forbidUnknownValues: true,
