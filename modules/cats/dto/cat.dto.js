@@ -45,7 +45,7 @@ const RARITY_CSV = csvOf(RARITY_VALUES);
 const msg = (name, values) => `${name} must be a comma-separated list of: ${values.join(', ')}`;
 class CatSearchQueryDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EYES_CSV" }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "POSE_CSV" }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "EXPRESSION_CSV" }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "PATTERN_CSV" }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "BACKGROUND_CSV" }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CROWN_CSV" }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GLASSES_CSV" }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "CATEGORY_CSV" }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENDER_CSV" }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "COLOR_CSV" }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "GENESIS_CSV" }, rarity: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "RARITY_CSV" }, sort: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "/^(newest|rarity)$/" } };
+        return { eyes: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, pose: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, expression: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, pattern: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, background: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, crown: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, glasses: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, category: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, gender: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, color: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, genesis: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, rarity: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH }, sort: { required: false, type: () => String, maxLength: FILTER_MAX_LENGTH, pattern: "^(newest|rarity)$" } };
     }
 }
 exports.CatSearchQueryDto = CatSearchQueryDto;
@@ -346,7 +346,7 @@ __decorate([
 ], CatNumbersPaginatedResultDto.prototype, "itemsPerPage", void 0);
 class CatSearchResultDto extends CatNumbersPaginatedResultDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { facets: { required: true, type: () => Object }, categoryTotal: { required: true, type: () => Number, nullable: true } };
+        return { facets: { required: true, type: "object", additionalProperties: { type: "object", additionalProperties: { type: "number" } } }, categoryTotal: { required: true, type: () => Number, nullable: true } };
     }
 }
 exports.CatSearchResultDto = CatSearchResultDto;
@@ -533,7 +533,7 @@ __decorate([
 ], SyncHealthDto.prototype, "stalled", void 0);
 class ExtendedHealthDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { status: { required: true, type: () => Object }, timestamp: { required: true, type: () => String }, uptimeSec: { required: true, type: () => Number }, version: { required: true, type: () => String }, memoryMB: { required: true, type: () => Number }, database: { required: true, type: () => require("./cat.dto").DatabaseHealthDto }, sync: { required: true, type: () => require("./cat.dto").SyncHealthDto }, cache: { required: true, type: () => require("./cat.dto").CacheStatsDto } };
+        return { status: { required: true, enum: ["ok", "degraded", "down"] }, timestamp: { required: true, type: () => String }, uptimeSec: { required: true, type: () => Number }, version: { required: true, type: () => String }, memoryMB: { required: true, type: () => Number }, database: { required: true, type: () => require("./cat.dto").DatabaseHealthDto }, sync: { required: true, type: () => require("./cat.dto").SyncHealthDto }, cache: { required: true, type: () => require("./cat.dto").CacheStatsDto } };
     }
 }
 exports.ExtendedHealthDto = ExtendedHealthDto;

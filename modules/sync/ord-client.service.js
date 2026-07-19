@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdClientService = void 0;
+exports.parseSatpoint = parseSatpoint;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const FETCH_TIMEOUT_MS = 30_000;
@@ -31,6 +32,22 @@ let OrdClientService = class OrdClientService {
         const data = await this.fetchJson(`${this.baseUrl}/block/${height}`);
         return data.hash;
     }
+    async getCatCurrentLocation(catNumber) {
+        const cat = await this.getCat(catNumber);
+        if (!cat)
+            return null;
+        const insc = await this.fetchJson(`${this.baseUrl}/inscription/${cat.id}`, true);
+        if (!insc || !insc.address)
+            return null;
+        const parsed = parseSatpoint(insc.satpoint);
+        if (!parsed)
+            return null;
+        return {
+            txid: parsed.txid,
+            vout: parsed.vout,
+            ordinalsAddress: insc.address,
+        };
+    }
     async fetchJson(url, allow404 = false) {
         const res = await fetch(url, {
             headers: { Accept: 'application/json' },
@@ -50,4 +67,16 @@ exports.OrdClientService = OrdClientService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], OrdClientService);
+function parseSatpoint(satpoint) {
+    const parts = satpoint.split(':');
+    if (parts.length !== 3)
+        return null;
+    const [txid, voutRaw] = parts;
+    if (!/^[0-9a-f]{64}$/i.test(txid))
+        return null;
+    const vout = Number.parseInt(voutRaw, 10);
+    if (!Number.isInteger(vout) || vout < 0)
+        return null;
+    return { txid: txid.toLowerCase(), vout };
+}
 //# sourceMappingURL=ord-client.service.js.map

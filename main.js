@@ -7,6 +7,7 @@ const helmet_1 = require("@fastify/helmet");
 const config_1 = require("@nestjs/config");
 const sharp = require("sharp");
 const app_module_1 = require("./app.module");
+const no_store_on_error_filter_1 = require("./modules/shared/no-store-on-error.filter");
 const swagger_1 = require("./swagger");
 sharp.cache(false);
 sharp.concurrency(1);
@@ -22,6 +23,7 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
+    app.useGlobalFilters(new no_store_on_error_filter_1.NoStoreOnErrorFilter(app.get(core_1.HttpAdapterHost)));
     (0, swagger_1.setupSwagger)(app);
     const cfg = app.get(config_1.ConfigService);
     const port = cfg.get('PORT', 3333);

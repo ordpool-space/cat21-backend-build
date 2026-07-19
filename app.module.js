@@ -15,6 +15,7 @@ const app_controller_1 = require("./app.controller");
 const env_config_1 = require("./env.config");
 const drizzle_module_1 = require("./modules/shared/drizzle/drizzle.module");
 const cats_module_1 = require("./modules/cats/cats.module");
+const listings_module_1 = require("./modules/listings/listings.module");
 const sync_module_1 = require("./modules/sync/sync.module");
 let AppModule = class AppModule {
 };
@@ -28,6 +29,7 @@ exports.AppModule = AppModule = __decorate([
             drizzle_module_1.DrizzleModule,
             cats_module_1.CatsModule,
             sync_module_1.SyncModule,
+            listings_module_1.ListingsModule,
         ],
         controllers: [app_controller_1.AppController],
     })
