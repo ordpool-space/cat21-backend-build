@@ -6,6 +6,7 @@ export interface OrdCatDetail {
     sat: number;
     fee: number;
     height: number;
+    block_hash: string | null;
     timestamp: number;
     value: number;
     weight: number;
@@ -25,7 +26,6 @@ export declare class OrdClientService {
     constructor(configService: ConfigService);
     getLatestCatNumber(): Promise<number>;
     getCat(catNumberOrId: number | string): Promise<OrdCatDetail | null>;
-    getBlockHash(height: number): Promise<string>;
     getCatCurrentLocation(catNumber: number): Promise<CatCurrentLocation | null>;
     private fetchJson;
 }

@@ -30,7 +30,6 @@ let SyncService = SyncService_1 = class SyncService {
         this.logger = new common_1.Logger(SyncService_1.name);
         this.syncing = false;
         this.localMax = -1;
-        this.blockHashCache = new Map();
         this.lastSuccessAt = null;
         this.lastErrorAt = null;
         this.lastError = null;
@@ -90,14 +89,6 @@ let SyncService = SyncService_1 = class SyncService {
     async handleSync() {
         await this.sync();
     }
-    async getBlockHashCached(height) {
-        const cached = this.blockHashCache.get(height);
-        if (cached)
-            return cached;
-        const hash = await this.ordClient.getBlockHash(height);
-        this.blockHashCache.set(height, hash);
-        return hash;
-    }
     async sync() {
         if (this.syncing) {
             this.logger.debug('Sync already in progress, skipping');
@@ -131,10 +122,11 @@ let SyncService = SyncService_1 = class SyncService {
                     .filter((d) => d !== null);
                 if (details.length === 0)
                     break;
-                const uniqueHeights = [...new Set(details.map((d) => d.height))];
-                await Promise.all(uniqueHeights.map((h) => this.getBlockHashCached(h)));
                 const rows = details.map((detail) => {
-                    const blockHash = this.blockHashCache.get(detail.height);
+                    const blockHash = detail.block_hash;
+                    if (!blockHash) {
+                        throw new Error(`Cat #${detail.number} has no block_hash`);
+                    }
                     const txid = detail.id.replace(/i\d+$/, '');
                     const parsed = ordpool_parser_1.Cat21ParserService.parse({
                         txid,
@@ -206,7 +198,6 @@ let SyncService = SyncService_1 = class SyncService {
             this.logger.error('Sync failed', error);
         }
         finally {
-            this.blockHashCache.clear();
             this.syncing = false;
         }
     }

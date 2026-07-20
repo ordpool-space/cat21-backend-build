@@ -48,6 +48,7 @@ describe('SyncService', () => {
             sat: 100000 + n,
             fee: 1000,
             height,
+            block_hash: height.toString(16).padStart(64, '0'),
             timestamp: 1700000000 + n,
             value: 546,
             weight: 500,
@@ -70,7 +71,6 @@ describe('SyncService', () => {
         const ordClient = {
             getLatestCatNumber: jest.fn().mockResolvedValue(remoteMax),
             getCat: jest.fn().mockImplementation((n) => Promise.resolve(makeCat(n))),
-            getBlockHash: jest.fn().mockImplementation(() => Promise.resolve('0'.repeat(64))),
         };
         const cache = { onNewCatsSynced: jest.fn() };
         const service = new sync_service_1.SyncService(drizzle, ordClient, cache);
@@ -114,25 +114,6 @@ describe('SyncService', () => {
         expect(ordClient.getCat).toHaveBeenCalledWith(24);
         expect(insertMock).toHaveBeenCalledTimes(1);
     });
-    it('should fetch block hashes for unique heights only', async () => {
-        const { service, ordClient } = createMocks(-1, 1);
-        ordClient.getCat
-            .mockResolvedValueOnce(makeCat(0, 800000))
-            .mockResolvedValueOnce(makeCat(1, 800000));
-        await service.sync();
-        expect(ordClient.getBlockHash).toHaveBeenCalledWith(800000);
-        expect(ordClient.getBlockHash).toHaveBeenCalledTimes(1);
-    });
-    it('should fetch separate block hashes for different heights', async () => {
-        const { service, ordClient } = createMocks(-1, 1);
-        ordClient.getCat
-            .mockResolvedValueOnce(makeCat(0, 800000))
-            .mockResolvedValueOnce(makeCat(1, 800001));
-        await service.sync();
-        expect(ordClient.getBlockHash).toHaveBeenCalledWith(800000);
-        expect(ordClient.getBlockHash).toHaveBeenCalledWith(800001);
-        expect(ordClient.getBlockHash).toHaveBeenCalledTimes(2);
-    });
     it('should prevent concurrent syncs', async () => {
         const { service, ordClient } = createMocks(0, 5);
         ordClient.getCat.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(makeCat(1)), 50)));
@@ -166,10 +147,15 @@ describe('SyncService', () => {
         ordClient.getLatestCatNumber.mockRejectedValue(new Error('ECONNREFUSED'));
         await expect(service.sync()).resolves.toBeUndefined();
     });
-    it('should not throw when getBlockHash fails mid-sync', async () => {
-        const { service, ordClient } = createMocks(-1, 0);
-        ordClient.getBlockHash.mockRejectedValue(new Error('500 Internal Server Error'));
+    it('should retry a cat with no block_hash rather than advance past it', async () => {
+        const { service, ordClient, insertMock } = createMocks(-1, 0);
+        ordClient.getCat.mockResolvedValueOnce({ ...makeCat(0), block_hash: null });
         await expect(service.sync()).resolves.toBeUndefined();
+        ordClient.getCat.mockResolvedValueOnce(makeCat(0));
+        await service.sync();
+        const insertedValues = insertMock.mock.results[0].value.ignore.mock.results[0].value.values.mock.calls[0][0];
+        expect(insertedValues).toHaveLength(1);
+        expect(insertedValues[0].catNumber).toBe(0);
     });
     it('should reset syncing flag after error (allows retry on next tick)', async () => {
         const { service, ordClient } = createMocks(0, 5);
@@ -178,15 +164,6 @@ describe('SyncService', () => {
         ordClient.getLatestCatNumber.mockResolvedValue(0);
         await service.sync();
         expect(ordClient.getLatestCatNumber).toHaveBeenCalledTimes(2);
-    });
-    it('should clear blockHashCache after error (no stale data)', async () => {
-        const { service, ordClient } = createMocks(-1, 0);
-        await service.sync();
-        expect(ordClient.getBlockHash).toHaveBeenCalledTimes(1);
-        ordClient.getLatestCatNumber.mockResolvedValue(1);
-        ordClient.getCat.mockResolvedValue(makeCat(1));
-        await service.sync();
-        expect(ordClient.getBlockHash).toHaveBeenCalledTimes(2);
     });
     it('should recover after ord goes down and comes back', async () => {
         const { service, ordClient, insertMock } = createMocks(0, 5);

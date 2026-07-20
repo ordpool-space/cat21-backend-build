@@ -28,10 +28,6 @@ let OrdClientService = class OrdClientService {
     async getCat(catNumberOrId) {
         return this.fetchJson(`${this.baseUrl}/cat/${catNumberOrId}`, true);
     }
-    async getBlockHash(height) {
-        const data = await this.fetchJson(`${this.baseUrl}/block/${height}`);
-        return data.hash;
-    }
     async getCatCurrentLocation(catNumber) {
         const cat = await this.getCat(catNumber);
         if (!cat)

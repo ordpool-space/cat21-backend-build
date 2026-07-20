@@ -11,7 +11,6 @@ export declare class SyncService implements OnModuleInit {
     private readonly logger;
     private syncing;
     private localMax;
-    private readonly blockHashCache;
     private lastSuccessAt;
     private lastErrorAt;
     private lastError;
@@ -24,7 +23,6 @@ export declare class SyncService implements OnModuleInit {
     onModuleInit(): Promise<void>;
     private backfillDominantColorCategory;
     handleSync(): Promise<void>;
-    private getBlockHashCached;
     sync(): Promise<void>;
     private recomputeRarityForAllCategories;
     private recomputeRarityForCategory;
