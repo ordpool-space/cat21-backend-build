@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
+const sharp = require("sharp");
 const cats_controller_1 = require("./cats.controller");
 const genesis_cat_1 = require("./__fixtures__/genesis-cat");
 const mockCat = genesis_cat_1.GENESIS_DTO;
@@ -145,6 +146,49 @@ describe('CatsController', () => {
             service.getCatSvg.mockResolvedValue('not-valid-svg');
             const reply = createMockReply();
             await expect(controller.getCatWebp(0, reply)).rejects.toThrow(common_1.InternalServerErrorException);
+        });
+    });
+    describe('getCatSocialCard', () => {
+        const validSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect width="22" height="22" fill="red"/></svg>';
+        it('should throw NotFoundException when the cat does not exist', async () => {
+            service.getCatByNumber.mockResolvedValue(null);
+            const reply = createMockReply();
+            await expect(controller.getCatSocialCard(999999, reply)).rejects.toThrow(common_1.NotFoundException);
+        });
+        it('should throw NotFoundException when the SVG is missing', async () => {
+            service.getCatByNumber.mockResolvedValue(mockCat);
+            service.getCatSvg.mockResolvedValue(null);
+            const reply = createMockReply();
+            await expect(controller.getCatSocialCard(0, reply)).rejects.toThrow(common_1.NotFoundException);
+        });
+        it('should send a PNG card with immutable headers for a valid cat', async () => {
+            service.getCatByNumber.mockResolvedValue(mockCat);
+            service.getCatSvg.mockResolvedValue(validSvg);
+            const reply = createMockReply();
+            await controller.getCatSocialCard(0, reply);
+            expect(reply.header).toHaveBeenCalledWith('Content-Type', 'image/png');
+            expect(reply.header).toHaveBeenCalledWith('Content-Disposition', 'inline; filename="cat21-0-social.png"');
+            expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
+            expect(reply.send).toHaveBeenCalledWith(expect.any(Buffer));
+        });
+        it('should render a 1200x630 card', async () => {
+            service.getCatByNumber.mockResolvedValue(mockCat);
+            service.getCatSvg.mockResolvedValue(validSvg);
+            const reply = createMockReply();
+            await controller.getCatSocialCard(0, reply);
+            const sent = reply.send.mock.calls[0][0];
+            const meta = await sharp(sent).metadata();
+            expect(meta.width).toBe(1200);
+            expect(meta.height).toBe(630);
+        });
+        it('should full-bleed the card in the cat background colour (genesis-orange fallback when none)', async () => {
+            service.getCatByNumber.mockResolvedValue({ ...mockCat, backgroundColors: [] });
+            service.getCatSvg.mockResolvedValue(validSvg);
+            const reply = createMockReply();
+            await controller.getCatSocialCard(0, reply);
+            const sent = reply.send.mock.calls[0][0];
+            const { data } = await sharp(sent).raw().toBuffer({ resolveWithObject: true });
+            expect([data[0], data[1], data[2]]).toEqual([255, 153, 0]);
         });
     });
 });

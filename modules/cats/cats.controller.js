@@ -105,6 +105,39 @@ let CatsController = class CatsController {
             throw new common_1.InternalServerErrorException(`Failed to render image for cat #${catNumber}`);
         }
     }
+    async getCatSocialCard(catNumber, reply) {
+        const cat = await this.catsService.getCatByNumber(catNumber);
+        const svg = cat ? await this.catsService.getCatSvg(catNumber) : null;
+        if (!cat || !svg) {
+            reply.header('Cache-Control', 'no-store');
+            throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
+        }
+        const CARD_WIDTH = 1200;
+        const CARD_HEIGHT = 630;
+        const CAT_SIZE = 560;
+        const background = cat.backgroundColors?.[0] ?? '#ff9900';
+        try {
+            const catPng = await sharp(Buffer.from(svg))
+                .resize(CAT_SIZE, CAT_SIZE)
+                .png()
+                .toBuffer();
+            const card = await sharp({
+                create: { width: CARD_WIDTH, height: CARD_HEIGHT, channels: 4, background },
+            })
+                .composite([{ input: catPng, gravity: 'center' }])
+                .png()
+                .toBuffer();
+            return reply
+                .header('Cache-Control', IMMUTABLE_CACHE_CONTROL)
+                .header('Content-Type', 'image/png')
+                .header('Content-Disposition', `inline; filename="cat21-${catNumber}-social.png"`)
+                .send(card);
+        }
+        catch {
+            reply.header('Cache-Control', 'no-store');
+            throw new common_1.InternalServerErrorException(`Failed to render social card for cat #${catNumber}`);
+        }
+    }
     async getCats(itemsPerPage, currentPage) {
         return this.catsService.getCats(Math.max(1, Math.min(itemsPerPage, 100)), Math.max(1, currentPage));
     }
@@ -212,6 +245,22 @@ __decorate([
     __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", Promise)
 ], CatsController.prototype, "getCatWebp", null);
+__decorate([
+    (0, common_1.Get)('cat/:catNumber/social.png'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get cat social-share card',
+        description: 'Returns a 1200x630 PNG card sized for Open Graph / Twitter previews. The cat art is composited onto a full-bleed field of its own background colour, so a shared /cat/:catNumber link shows the specific cat instead of the generic site preview.',
+    }),
+    (0, swagger_1.ApiParam)({ name: 'catNumber', description: 'Cat number (0-based)', example: 0 }),
+    (0, swagger_1.ApiProduces)('image/png'),
+    (0, swagger_1.ApiOkResponse)({ description: '1200x630 PNG social-share card' }),
+    (0, swagger_1.ApiNotFoundResponse)({ description: 'No cat found with this number' }),
+    __param(0, (0, common_1.Param)('catNumber', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", Promise)
+], CatsController.prototype, "getCatSocialCard", null);
 __decorate([
     (0, common_1.Get)('cats/:itemsPerPage/:currentPage'),
     (0, swagger_1.ApiOperation)({ summary: 'Get paginated cat list', description: 'Returns a paginated list of cats with all traits, sorted by newest first. Max 100 items per page. Use /api/cats/numbers/ for a lightweight alternative.' }),
