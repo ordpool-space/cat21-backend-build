@@ -12,6 +12,7 @@ var BidsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BidsService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
 const drizzle_orm_1 = require("drizzle-orm");
@@ -20,7 +21,6 @@ const core_2 = require("ordpool-sdk/core");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const bids_1 = require("../shared/drizzle/schema/bids");
 const ord_client_service_1 = require("../sync/ord-client.service");
-const BACKEND_NETWORK = 'mainnet';
 const MARKETPLACE_FLOOR_SATS = 1_000;
 const CAT21_POSTAGE_SATS = 546;
 function toSdkNetwork(name) {
@@ -59,16 +59,17 @@ function scriptToAddress(script, network) {
     }
 }
 let BidsService = BidsService_1 = class BidsService {
-    constructor(drizzle, ordClient) {
+    constructor(drizzle, ordClient, configService) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(BidsService_1.name);
+        this.backendNetwork = configService.get('this.backendNetwork', 'mainnet');
     }
     async create(dto) {
-        if (dto.network !== BACKEND_NETWORK) {
+        if (dto.network !== this.backendNetwork) {
             throw new common_1.BadRequestException({
                 code: 'network-mismatch',
-                detail: `Bid targets network=${dto.network}; this backend serves ${BACKEND_NETWORK}.`,
+                detail: `Bid targets network=${dto.network}; this backend serves ${this.backendNetwork}.`,
             });
         }
         if (!dto.cats.includes(dto.headlineCatNumber)) {
@@ -316,6 +317,7 @@ exports.BidsService = BidsService;
 exports.BidsService = BidsService = BidsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService])
+        ord_client_service_1.OrdClientService,
+        config_1.ConfigService])
 ], BidsService);
 //# sourceMappingURL=bids.service.js.map

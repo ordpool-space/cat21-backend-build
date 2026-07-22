@@ -20,6 +20,7 @@ class EnvironmentVariables {
         this.HOST = '0.0.0.0';
         this.ORD_API_URL = 'https://ord.cat21.space';
         this.ELECTRS_API_URL = 'https://api.ordpool.space/api';
+        this.BACKEND_NETWORK = 'mainnet';
     }
 }
 exports.EnvironmentVariables = EnvironmentVariables;
@@ -52,6 +53,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], EnvironmentVariables.prototype, "ELECTRS_API_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest']),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "BACKEND_NETWORK", void 0);
 function validate(config) {
     const validated = (0, class_transformer_1.plainToClass)(EnvironmentVariables, config);
     const errors = (0, class_validator_1.validateSync)(validated, {

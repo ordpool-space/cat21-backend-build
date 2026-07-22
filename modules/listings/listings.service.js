@@ -12,6 +12,7 @@ var ListingsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListingsService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const drizzle_orm_1 = require("drizzle-orm");
 const core_1 = require("ordpool-sdk/core");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
@@ -19,7 +20,6 @@ const listings_1 = require("../shared/drizzle/schema/listings");
 const ord_client_service_1 = require("../sync/ord-client.service");
 const ANTI_REPLAY_MAX_AGE_S = 24 * 60 * 60;
 const CLOCK_SKEW_FUTURE_S = 60 * 60;
-const BACKEND_NETWORK = 'mainnet';
 function toSdkNetwork(name) {
     switch (name) {
         case 'mainnet': return core_1.Network.Mainnet;
@@ -37,16 +37,17 @@ function catsArraysEqual(a, b) {
     return sa.every((v, i) => v === sb[i]);
 }
 let ListingsService = ListingsService_1 = class ListingsService {
-    constructor(drizzle, ordClient) {
+    constructor(drizzle, ordClient, configService) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(ListingsService_1.name);
+        this.backendNetwork = configService.get('BACKEND_NETWORK', 'mainnet');
     }
     async create(dto) {
-        if (dto.network !== BACKEND_NETWORK) {
+        if (dto.network !== this.backendNetwork) {
             throw new common_1.BadRequestException({
                 code: 'network-mismatch',
-                detail: `Listing signed for network=${dto.network}; this backend serves ${BACKEND_NETWORK}.`,
+                detail: `Listing signed for network=${dto.network}; this backend serves ${this.backendNetwork}.`,
             });
         }
         const nowS = Math.floor(Date.now() / 1000);
@@ -266,6 +267,7 @@ exports.ListingsService = ListingsService;
 exports.ListingsService = ListingsService = ListingsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService])
+        ord_client_service_1.OrdClientService,
+        config_1.ConfigService])
 ], ListingsService);
 //# sourceMappingURL=listings.service.js.map

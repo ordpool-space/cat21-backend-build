@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from '../sync/ord-client.service';
 import { CreateListingDto } from './dto/create-listing.dto';
@@ -6,7 +7,8 @@ export declare class ListingsService {
     private readonly drizzle;
     private readonly ordClient;
     private readonly logger;
-    constructor(drizzle: DrizzleService, ordClient: OrdClientService);
+    private readonly backendNetwork;
+    constructor(drizzle: DrizzleService, ordClient: OrdClientService, configService: ConfigService);
     create(dto: CreateListingDto): Promise<ListingDto>;
     findByCatNumber(catNumber: number): Promise<ListingDto | null>;
     findByOutpoint(network: string, catTxid: string, catVout: number): Promise<ListingDto | null>;
