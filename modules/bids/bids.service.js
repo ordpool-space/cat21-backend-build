@@ -12,7 +12,6 @@ var BidsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BidsService = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
 const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
 const drizzle_orm_1 = require("drizzle-orm");
@@ -21,6 +20,14 @@ const core_2 = require("ordpool-sdk/core");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const bids_1 = require("../shared/drizzle/schema/bids");
 const ord_client_service_1 = require("../sync/ord-client.service");
+function readBackendNetworkFromEnv() {
+    const raw = process.env.BACKEND_NETWORK;
+    const allowed = ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'];
+    if (raw && allowed.includes(raw)) {
+        return raw;
+    }
+    return 'mainnet';
+}
 const MARKETPLACE_FLOOR_SATS = 1_000;
 const CAT21_POSTAGE_SATS = 546;
 function toSdkNetwork(name) {
@@ -59,11 +66,12 @@ function scriptToAddress(script, network) {
     }
 }
 let BidsService = BidsService_1 = class BidsService {
-    constructor(drizzle, ordClient, configService) {
+    constructor(drizzle, ordClient) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(BidsService_1.name);
-        this.backendNetwork = configService.get('this.backendNetwork', 'mainnet');
+        this.backendNetwork = readBackendNetworkFromEnv();
+        this.logger.log(`BidsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
     async create(dto) {
         if (dto.network !== this.backendNetwork) {
@@ -317,7 +325,6 @@ exports.BidsService = BidsService;
 exports.BidsService = BidsService = BidsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService,
-        config_1.ConfigService])
+        ord_client_service_1.OrdClientService])
 ], BidsService);
 //# sourceMappingURL=bids.service.js.map

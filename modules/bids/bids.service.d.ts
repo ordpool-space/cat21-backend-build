@@ -1,4 +1,3 @@
-import { ConfigService } from '@nestjs/config';
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from '../sync/ord-client.service';
 import { BidDto, PaginatedBidsDto } from './dto/bid.dto';
@@ -8,7 +7,7 @@ export declare class BidsService {
     private readonly ordClient;
     private readonly logger;
     private readonly backendNetwork;
-    constructor(drizzle: DrizzleService, ordClient: OrdClientService, configService: ConfigService);
+    constructor(drizzle: DrizzleService, ordClient: OrdClientService);
     create(dto: CreateBidDto): Promise<BidDto>;
     findByOutpoint(network: string, catTxid: string, catVout: number): Promise<BidDto[]>;
     findByOutpointAndBuyer(network: string, catTxid: string, catVout: number, buyerOrdinalsAddress: string): Promise<BidDto | null>;

@@ -12,7 +12,6 @@ var ListingsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListingsService = void 0;
 const common_1 = require("@nestjs/common");
-const config_1 = require("@nestjs/config");
 const drizzle_orm_1 = require("drizzle-orm");
 const core_1 = require("ordpool-sdk/core");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
@@ -36,12 +35,21 @@ function catsArraysEqual(a, b) {
     const sb = [...b].sort((x, y) => x - y);
     return sa.every((v, i) => v === sb[i]);
 }
+function readBackendNetworkFromEnv() {
+    const raw = process.env.BACKEND_NETWORK;
+    const allowed = ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'];
+    if (raw && allowed.includes(raw)) {
+        return raw;
+    }
+    return 'mainnet';
+}
 let ListingsService = ListingsService_1 = class ListingsService {
-    constructor(drizzle, ordClient, configService) {
+    constructor(drizzle, ordClient) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(ListingsService_1.name);
-        this.backendNetwork = configService.get('BACKEND_NETWORK', 'mainnet');
+        this.backendNetwork = readBackendNetworkFromEnv();
+        this.logger.log(`ListingsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
     async create(dto) {
         if (dto.network !== this.backendNetwork) {
@@ -267,7 +275,6 @@ exports.ListingsService = ListingsService;
 exports.ListingsService = ListingsService = ListingsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService,
-        config_1.ConfigService])
+        ord_client_service_1.OrdClientService])
 ], ListingsService);
 //# sourceMappingURL=listings.service.js.map
