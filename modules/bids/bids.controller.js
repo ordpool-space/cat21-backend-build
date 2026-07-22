@@ -38,7 +38,7 @@ let BidsController = class BidsController {
         }
     }
     async findByOutpoint(catTxid, catVout, reply) {
-        const rows = await this.bids.findByOutpoint('mainnet', catTxid, catVout);
+        const rows = await this.bids.findByOutpoint(this.bids.network, catTxid, catVout);
         reply.header('Cache-Control', SINGLE_BID_CACHE_CONTROL);
         return rows;
     }
@@ -46,7 +46,7 @@ let BidsController = class BidsController {
         return this.bids.findPaginated(itemsPerPage, currentPage);
     }
     async delete(catTxid, catVout, buyerOrdinalsAddress, reply) {
-        await this.bids.deleteByOutpointAndBuyer('mainnet', catTxid, catVout, buyerOrdinalsAddress);
+        await this.bids.deleteByOutpointAndBuyer(this.bids.network, catTxid, catVout, buyerOrdinalsAddress);
         reply.header('Cache-Control', NO_STORE);
     }
 };

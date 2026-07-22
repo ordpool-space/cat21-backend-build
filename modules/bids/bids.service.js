@@ -76,6 +76,9 @@ let BidsService = BidsService_1 = class BidsService {
         this.backendNetwork = readBackendNetworkFromEnv();
         this.logger.log(`BidsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
+    get network() {
+        return this.backendNetwork;
+    }
     async create(dto) {
         if (dto.network !== this.backendNetwork) {
             throw new common_1.BadRequestException({

@@ -3,6 +3,7 @@ import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from '../sync/ord-client.service';
 import { BidDto, PaginatedBidsDto } from './dto/bid.dto';
 import { CreateBidDto } from './dto/create-bid.dto';
+type BackendNetworkString = 'mainnet' | 'testnet3' | 'testnet4' | 'signet' | 'regtest';
 export declare function scriptToAddress(script: Uint8Array, network: Network): string | null;
 export declare class BidsService {
     private readonly drizzle;
@@ -10,6 +11,7 @@ export declare class BidsService {
     private readonly logger;
     private readonly backendNetwork;
     constructor(drizzle: DrizzleService, ordClient: OrdClientService);
+    get network(): BackendNetworkString;
     create(dto: CreateBidDto): Promise<BidDto>;
     findByOutpoint(network: string, catTxid: string, catVout: number): Promise<BidDto[]>;
     findByOutpointAndBuyer(network: string, catTxid: string, catVout: number, buyerOrdinalsAddress: string): Promise<BidDto | null>;
@@ -17,3 +19,4 @@ export declare class BidsService {
     deleteByOutpointAndBuyer(network: string, catTxid: string, catVout: number, buyerOrdinalsAddress: string): Promise<void>;
     private rowToDto;
 }
+export {};
