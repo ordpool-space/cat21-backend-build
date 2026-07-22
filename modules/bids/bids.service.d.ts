@@ -1,7 +1,9 @@
+import { Network } from "ordpool-sdk/core";
 import { DrizzleService } from '../shared/drizzle/drizzle.service';
 import { OrdClientService } from '../sync/ord-client.service';
 import { BidDto, PaginatedBidsDto } from './dto/bid.dto';
 import { CreateBidDto } from './dto/create-bid.dto';
+export declare function scriptToAddress(script: Uint8Array, network: Network): string | null;
 export declare class BidsService {
     private readonly drizzle;
     private readonly ordClient;

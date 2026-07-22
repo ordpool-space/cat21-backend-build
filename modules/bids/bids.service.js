@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var BidsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BidsService = void 0;
+exports.scriptToAddress = scriptToAddress;
 const common_1 = require("@nestjs/common");
 const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
@@ -39,14 +40,16 @@ function toSdkNetwork(name) {
         case 'regtest': return core_1.Network.Regtest;
     }
 }
+const REGTEST_NETWORK = { ...btc.TEST_NETWORK, bech32: 'bcrt' };
 function toScureNetwork(n) {
     switch (n) {
         case core_1.Network.Mainnet: return btc.NETWORK;
         case core_1.Network.Testnet3:
         case core_1.Network.Testnet4:
         case core_1.Network.Signet:
-        case core_1.Network.Regtest:
             return btc.TEST_NETWORK;
+        case core_1.Network.Regtest:
+            return REGTEST_NETWORK;
     }
 }
 function catsArraysEqual(a, b) {
