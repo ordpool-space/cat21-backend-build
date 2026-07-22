@@ -9,6 +9,7 @@ export declare class ListingsService {
     constructor(drizzle: DrizzleService, ordClient: OrdClientService);
     create(dto: CreateListingDto): Promise<ListingDto>;
     findByCatNumber(catNumber: number): Promise<ListingDto | null>;
+    findByOutpoint(network: string, catTxid: string, catVout: number): Promise<ListingDto | null>;
     findPaginated(itemsPerPage: number, currentPage: number): Promise<PaginatedListingsDto>;
     deleteByCatNumber(catNumber: number): Promise<void>;
     deleteByIdIfUnchanged(id: string, signedAt: number): Promise<void>;

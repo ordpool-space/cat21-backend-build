@@ -29,6 +29,13 @@ function toSdkNetwork(name) {
         case 'regtest': return core_1.Network.Regtest;
     }
 }
+function catsArraysEqual(a, b) {
+    if (a.length !== b.length)
+        return false;
+    const sa = [...a].sort((x, y) => x - y);
+    const sb = [...b].sort((x, y) => x - y);
+    return sa.every((v, i) => v === sb[i]);
+}
 let ListingsService = ListingsService_1 = class ListingsService {
     constructor(drizzle, ordClient) {
         this.drizzle = drizzle;
@@ -55,9 +62,16 @@ let ListingsService = ListingsService_1 = class ListingsService {
                 detail: `signedAt is ${dto.signedAt - nowS}s in the future; max ${CLOCK_SKEW_FUTURE_S}s`,
             });
         }
+        if (!dto.cats.includes(dto.catNumber)) {
+            throw new common_1.BadRequestException({
+                code: 'headline-not-in-bundle',
+                detail: `catNumber ${dto.catNumber} is not a member of cats [${dto.cats.join(',')}]`,
+            });
+        }
         const verifyResult = (0, core_1.verifyListingSignature)({
             fields: {
                 catNumber: dto.catNumber,
+                cats: dto.cats,
                 network: toSdkNetwork(dto.network),
                 askSats: dto.askSats,
                 payTo: dto.payTo,
@@ -72,6 +86,32 @@ let ListingsService = ListingsService_1 = class ListingsService {
             throw new common_1.BadRequestException({
                 code: `signature-${verifyResult.reason}`,
                 detail: verifyResult.detail,
+            });
+        }
+        let liveCats;
+        try {
+            liveCats = await this.ordClient.getCatsAtOutput(dto.catTxid, dto.catVout);
+        }
+        catch (err) {
+            this.logger.warn(`ord /output lookup failed for ${dto.catTxid}:${dto.catVout}: ${err instanceof Error ? err.message : err}`);
+            throw new common_1.BadRequestException({
+                code: 'ord-lookup-failed',
+                detail: 'On-chain cats-bundle check could not complete. Try again in a moment.',
+            });
+        }
+        if (liveCats === null || liveCats.length === 0) {
+            throw new common_1.BadRequestException({
+                code: 'cat-not-found',
+                detail: `UTXO ${dto.catTxid}:${dto.catVout} carries no cats on ord (already spent, ` +
+                    `unknown, or never held a cat). If the cat just moved, re-sign against the ` +
+                    `new outpoint.`,
+            });
+        }
+        if (!catsArraysEqual(liveCats, dto.cats)) {
+            throw new common_1.BadRequestException({
+                code: 'cats-bundle-drift',
+                detail: `You signed for cats=[${dto.cats.join(',')}] but the UTXO now carries ` +
+                    `[${liveCats.join(',')}]. Re-sign against the current bundle.`,
             });
         }
         let current;
@@ -104,8 +144,10 @@ let ListingsService = ListingsService_1 = class ListingsService {
                     `signature pinned ${dto.catTxid}:${dto.catVout}. Re-sign against the current UTXO.`,
             });
         }
+        const catsSorted = [...new Set(dto.cats)].sort((a, b) => a - b);
         const row = {
             catNumber: dto.catNumber,
+            cats: catsSorted,
             network: dto.network,
             askSats: dto.askSats,
             payTo: dto.payTo,
@@ -117,20 +159,32 @@ let ListingsService = ListingsService_1 = class ListingsService {
         };
         await this.drizzle.db
             .insert(listings_1.listings)
-            .values(row)
+            .values({
+            catNumber: row.catNumber,
+            catsOnUtxo: row.cats,
+            headlineCatNumber: row.catNumber,
+            network: row.network,
+            askSats: row.askSats,
+            payTo: row.payTo,
+            catTxid: row.catTxid,
+            catVout: row.catVout,
+            ordinalsAddress: row.ordinalsAddress,
+            signedAt: row.signedAt,
+            signature: row.signature,
+        })
             .onDuplicateKeyUpdate({
             set: {
-                network: row.network,
+                catNumber: row.catNumber,
+                catsOnUtxo: row.cats,
+                headlineCatNumber: row.catNumber,
                 askSats: row.askSats,
                 payTo: row.payTo,
-                catTxid: row.catTxid,
-                catVout: row.catVout,
                 ordinalsAddress: row.ordinalsAddress,
                 signedAt: row.signedAt,
                 signature: row.signature,
             },
         });
-        const persisted = await this.findByCatNumber(dto.catNumber);
+        const persisted = await this.findByOutpoint(dto.network, dto.catTxid, dto.catVout);
         if (!persisted) {
             throw new common_1.BadRequestException({
                 code: 'persist-race',
@@ -144,6 +198,16 @@ let ListingsService = ListingsService_1 = class ListingsService {
             .select()
             .from(listings_1.listings)
             .where((0, drizzle_orm_1.eq)(listings_1.listings.catNumber, catNumber))
+            .limit(1);
+        if (rows.length === 0)
+            return null;
+        return this.rowToDto(rows[0]);
+    }
+    async findByOutpoint(network, catTxid, catVout) {
+        const rows = await this.drizzle.db
+            .select()
+            .from(listings_1.listings)
+            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(listings_1.listings.network, network), (0, drizzle_orm_1.eq)(listings_1.listings.catTxid, catTxid), (0, drizzle_orm_1.eq)(listings_1.listings.catVout, catVout)))
             .limit(1);
         if (rows.length === 0)
             return null;
@@ -185,6 +249,7 @@ let ListingsService = ListingsService_1 = class ListingsService {
         return {
             id: row.id,
             catNumber: row.catNumber,
+            cats: row.catsOnUtxo,
             network: row.network,
             askSats: row.askSats,
             payTo: row.payTo,

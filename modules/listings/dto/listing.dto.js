@@ -14,7 +14,7 @@ const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 class ListingDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, network: { required: true, type: () => String }, askSats: { required: true, type: () => Number }, payTo: { required: true, type: () => String }, catTxid: { required: true, type: () => String }, catVout: { required: true, type: () => Number }, ordinalsAddress: { required: true, type: () => String }, signedAt: { required: true, type: () => Number }, signature: { required: true, type: () => String }, createdAt: { required: true, type: () => String } };
+        return { id: { required: true, type: () => String }, catNumber: { required: true, type: () => Number }, cats: { required: true, type: () => [Number] }, network: { required: true, type: () => String }, askSats: { required: true, type: () => Number }, payTo: { required: true, type: () => String }, catTxid: { required: true, type: () => String }, catVout: { required: true, type: () => Number }, ordinalsAddress: { required: true, type: () => String }, signedAt: { required: true, type: () => Number }, signature: { required: true, type: () => String }, createdAt: { required: true, type: () => String } };
     }
 }
 exports.ListingDto = ListingDto;
@@ -26,14 +26,23 @@ __decorate([
     __metadata("design:type", String)
 ], ListingDto.prototype, "id", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Cat number the listing covers.', example: 42 }),
+    (0, swagger_1.ApiProperty)({ description: 'Headline cat number (member of `cats`).', example: 42 }),
     __metadata("design:type", Number)
 ], ListingDto.prototype, "catNumber", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
+        description: 'Every cat currently on the UTXO the listing pins. Sorted ascending. Load-bearing: ' +
+            'buyer pays for the whole bundle.',
+        example: [42],
+        type: [Number],
+    }),
+    __metadata("design:type", Array)
+], ListingDto.prototype, "cats", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
         description: 'Bitcoin network the seller signed against.',
         example: 'mainnet',
-        enum: ['mainnet', 'testnet3', 'testnet4', 'regtest'],
+        enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'],
     }),
     __metadata("design:type", String)
 ], ListingDto.prototype, "network", void 0);

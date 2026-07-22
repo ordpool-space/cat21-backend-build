@@ -16,13 +16,14 @@ const class_validator_1 = require("class-validator");
 const core_1 = require("ordpool-sdk/core");
 class CreateListingDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { catNumber: { required: true, type: () => Number, minimum: 0 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 }, signedAt: { required: true, type: () => Number, minimum: 1 }, signature: { required: true, type: () => String, maxLength: 512 } };
+        return { catNumber: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 }, signedAt: { required: true, type: () => Number, minimum: 1 }, signature: { required: true, type: () => String, maxLength: 512 } };
     }
 }
 exports.CreateListingDto = CreateListingDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Cat number the listing covers. 0 = Genesis Cat.',
+        description: 'Headline cat number for display. Must be a member of `cats` (the SDK enforces this at ' +
+            'sign time; the backend re-verifies). 0 = Genesis Cat.',
         example: 42,
         minimum: 0,
     }),
@@ -30,6 +31,24 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateListingDto.prototype, "catNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Every cat currently riding on the UTXO the listing pins (`catTxid:catVout`). ' +
+            'Sorted ascending, deduped. The seller signs this exact array so the buyer sees the ' +
+            "full bundle they're paying for — a PSBT spends the whole UTXO, not individual sats. " +
+            "Backend cross-checks this against ord's `/output/<outpoint>` at insert time and " +
+            'rejects on drift with code `cats-bundle-drift`.',
+        example: [42],
+        type: [Number],
+        minItems: 1,
+    }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(1),
+    (0, class_validator_1.ArrayUnique)(),
+    (0, class_validator_1.IsInt)({ each: true }),
+    (0, class_validator_1.Min)(0, { each: true }),
+    __metadata("design:type", Array)
+], CreateListingDto.prototype, "cats", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Bitcoin network the seller signed against. Binds the signature to a specific network — a testnet-signed listing bytes replayed against mainnet is rejected as `signature-does-not-verify`. Full enum matches ordpool-sdk `Network`; per-deployment the backend only accepts one of these via `network-mismatch`.',

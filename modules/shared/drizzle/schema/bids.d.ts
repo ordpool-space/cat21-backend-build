@@ -1,10 +1,10 @@
-export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithColumns<{
-    name: "listings";
+export declare const bids: import("drizzle-orm/mysql-core").MySqlTableWithColumns<{
+    name: "bids";
     schema: undefined;
     columns: {
         id: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "id";
-            tableName: "listings";
+            tableName: "bids";
             dataType: "string";
             columnType: "MySqlVarChar";
             data: string;
@@ -21,92 +21,7 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
         }, {}, {}>;
         network: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "network";
-            tableName: "listings";
-            dataType: "string";
-            columnType: "MySqlVarChar";
-            data: string;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        catNumber: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "cat_number";
-            tableName: "listings";
-            dataType: "number";
-            columnType: "MySqlInt";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        catsOnUtxo: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "cats_on_utxo";
-            tableName: "listings";
-            dataType: "custom";
-            columnType: "MySqlCustomColumn";
-            data: number[];
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        headlineCatNumber: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "headline_cat_number";
-            tableName: "listings";
-            dataType: "number";
-            columnType: "MySqlInt";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        askSats: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "ask_sats";
-            tableName: "listings";
-            dataType: "number";
-            columnType: "MySqlBigInt53";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        payTo: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "pay_to";
-            tableName: "listings";
+            tableName: "bids";
             dataType: "string";
             columnType: "MySqlVarChar";
             data: string;
@@ -123,7 +38,7 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
         }, {}, {}>;
         catTxid: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "cat_txid";
-            tableName: "listings";
+            tableName: "bids";
             dataType: "string";
             columnType: "MySqlVarChar";
             data: string;
@@ -140,7 +55,7 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
         }, {}, {}>;
         catVout: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "cat_vout";
-            tableName: "listings";
+            tableName: "bids";
             dataType: "number";
             columnType: "MySqlInt";
             data: number;
@@ -155,26 +70,43 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        ordinalsAddress: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "ordinals_address";
-            tableName: "listings";
-            dataType: "string";
-            columnType: "MySqlVarChar";
-            data: string;
+        catsOnUtxo: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "cats_on_utxo";
+            tableName: "bids";
+            dataType: "custom";
+            columnType: "MySqlCustomColumn";
+            data: number[];
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        headlineCatNumber: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "headline_cat_number";
+            tableName: "bids";
+            dataType: "number";
+            columnType: "MySqlInt";
+            data: number;
             driverParam: string | number;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
+            enumValues: undefined;
             baseColumn: never;
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        signedAt: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "signed_at";
-            tableName: "listings";
+        bidSats: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "bid_sats";
+            tableName: "bids";
             dataType: "number";
             columnType: "MySqlBigInt53";
             data: number;
@@ -189,9 +121,9 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        signature: import("drizzle-orm/mysql-core").MySqlColumn<{
-            name: "signature";
-            tableName: "listings";
+        buyerOrdinalsAddress: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "buyer_ordinals_address";
+            tableName: "bids";
             dataType: "string";
             columnType: "MySqlVarChar";
             data: string;
@@ -206,9 +138,60 @@ export declare const listings: import("drizzle-orm/mysql-core").MySqlTableWithCo
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        buyerPaymentAddress: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "buyer_payment_address";
+            tableName: "bids";
+            dataType: "string";
+            columnType: "MySqlVarChar";
+            data: string;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        sellerPaymentAddress: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "seller_payment_address";
+            tableName: "bids";
+            dataType: "string";
+            columnType: "MySqlVarChar";
+            data: string;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        psbtBase64: import("drizzle-orm/mysql-core").MySqlColumn<{
+            name: "psbt_base64";
+            tableName: "bids";
+            dataType: "string";
+            columnType: "MySqlText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/mysql-core").MySqlColumn<{
             name: "created_at";
-            tableName: "listings";
+            tableName: "bids";
             dataType: "date";
             columnType: "MySqlDateTime";
             data: Date;

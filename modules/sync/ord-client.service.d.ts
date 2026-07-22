@@ -21,12 +21,18 @@ export interface CatCurrentLocation {
     vout: number;
     ordinalsAddress: string;
 }
+export interface OrdOutputDetail {
+    cats: number[];
+    inscriptions: string[];
+    runes: Record<string, unknown>;
+}
 export declare class OrdClientService {
     private readonly baseUrl;
     constructor(configService: ConfigService);
     getLatestCatNumber(): Promise<number>;
     getCat(catNumberOrId: number | string): Promise<OrdCatDetail | null>;
     getCatCurrentLocation(catNumber: number): Promise<CatCurrentLocation | null>;
+    getCatsAtOutput(txid: string, vout: number): Promise<number[] | null>;
     private fetchJson;
 }
 export declare function parseSatpoint(satpoint: string): {

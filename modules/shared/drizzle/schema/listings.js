@@ -3,10 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.listings = void 0;
 const node_crypto_1 = require("node:crypto");
 const mysql_core_1 = require("drizzle-orm/mysql-core");
+const json_column_1 = require("./json-column");
+const jsonNumberArray = (0, json_column_1.jsonColumn)();
 exports.listings = (0, mysql_core_1.mysqlTable)('listings', {
     id: (0, mysql_core_1.varchar)('id', { length: 36 }).primaryKey().$defaultFn(() => (0, node_crypto_1.randomUUID)()),
-    catNumber: (0, mysql_core_1.int)('cat_number').notNull().unique(),
     network: (0, mysql_core_1.varchar)('network', { length: 16 }).notNull(),
+    catNumber: (0, mysql_core_1.int)('cat_number').notNull(),
+    catsOnUtxo: jsonNumberArray('cats_on_utxo').notNull(),
+    headlineCatNumber: (0, mysql_core_1.int)('headline_cat_number').notNull(),
     askSats: (0, mysql_core_1.bigint)('ask_sats', { mode: 'number' }).notNull(),
     payTo: (0, mysql_core_1.varchar)('pay_to', { length: 128 }).notNull(),
     catTxid: (0, mysql_core_1.varchar)('cat_txid', { length: 64 }).notNull(),
@@ -18,7 +22,9 @@ exports.listings = (0, mysql_core_1.mysqlTable)('listings', {
         .notNull()
         .$defaultFn(() => new Date()),
 }, (table) => [
+    (0, mysql_core_1.uniqueIndex)('listings_utxo_unique').on(table.network, table.catTxid, table.catVout),
     (0, mysql_core_1.index)('idx_listings_outpoint').on(table.catTxid, table.catVout),
     (0, mysql_core_1.index)('idx_listings_signed_at').on(table.signedAt),
+    (0, mysql_core_1.index)('idx_listings_headline_cat_number').on(table.headlineCatNumber),
 ]);
 //# sourceMappingURL=listings.js.map

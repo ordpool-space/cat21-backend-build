@@ -44,6 +44,16 @@ let OrdClientService = class OrdClientService {
             ordinalsAddress: insc.address,
         };
     }
+    async getCatsAtOutput(txid, vout) {
+        const out = await this.fetchJson(`${this.baseUrl}/output/${txid}:${vout}`, true);
+        if (!out)
+            return null;
+        if (!Array.isArray(out.cats))
+            return [];
+        const sorted = Array.from(new Set(out.cats.filter((c) => Number.isInteger(c) && c >= 0)))
+            .sort((a, b) => a - b);
+        return sorted;
+    }
     async fetchJson(url, allow404 = false) {
         const res = await fetch(url, {
             headers: { Accept: 'application/json' },

@@ -1,6 +1,7 @@
 export declare class ListingDto {
     id: string;
     catNumber: number;
+    cats: number[];
     network: string;
     askSats: number;
     payTo: string;
