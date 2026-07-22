@@ -19,6 +19,7 @@ class EnvironmentVariables {
         this.PORT = 3333;
         this.HOST = '0.0.0.0';
         this.ORD_API_URL = 'https://ord.cat21.space';
+        this.ELECTRS_API_URL = 'https://api.ordpool.space/api';
     }
 }
 exports.EnvironmentVariables = EnvironmentVariables;
@@ -47,6 +48,10 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], EnvironmentVariables.prototype, "ORD_API_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "ELECTRS_API_URL", void 0);
 function validate(config) {
     const validated = (0, class_transformer_1.plainToClass)(EnvironmentVariables, config);
     const errors = (0, class_validator_1.validateSync)(validated, {

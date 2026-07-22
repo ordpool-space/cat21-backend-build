@@ -4,5 +4,6 @@ export declare class EnvironmentVariables {
     HOST: string;
     DATABASE_URL: string;
     ORD_API_URL: string;
+    ELECTRS_API_URL: string;
 }
 export declare function validate(config: Record<string, unknown>): EnvironmentVariables;
