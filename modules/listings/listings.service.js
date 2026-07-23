@@ -14,41 +14,19 @@ exports.ListingsService = void 0;
 const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
 const core_1 = require("ordpool-sdk/core");
+const array_utils_1 = require("../shared/array-utils");
+const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const listings_1 = require("../shared/drizzle/schema/listings");
 const ord_client_service_1 = require("../sync/ord-client.service");
 const ANTI_REPLAY_MAX_AGE_S = 24 * 60 * 60;
 const CLOCK_SKEW_FUTURE_S = 60 * 60;
-function toSdkNetwork(name) {
-    switch (name) {
-        case 'mainnet': return core_1.Network.Mainnet;
-        case 'testnet3': return core_1.Network.Testnet3;
-        case 'testnet4': return core_1.Network.Testnet4;
-        case 'signet': return core_1.Network.Signet;
-        case 'regtest': return core_1.Network.Regtest;
-    }
-}
-function catsArraysEqual(a, b) {
-    if (a.length !== b.length)
-        return false;
-    const sa = [...a].sort((x, y) => x - y);
-    const sb = [...b].sort((x, y) => x - y);
-    return sa.every((v, i) => v === sb[i]);
-}
-function readBackendNetworkFromEnv() {
-    const raw = process.env.BACKEND_NETWORK;
-    const allowed = ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'];
-    if (raw && allowed.includes(raw)) {
-        return raw;
-    }
-    return 'mainnet';
-}
 let ListingsService = ListingsService_1 = class ListingsService {
     constructor(drizzle, ordClient) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(ListingsService_1.name);
-        this.backendNetwork = readBackendNetworkFromEnv();
+        this.backendNetwork = (0, backend_network_1.readBackendNetworkFromEnv)();
         this.logger.log(`ListingsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
     async create(dto) {
@@ -81,7 +59,7 @@ let ListingsService = ListingsService_1 = class ListingsService {
             fields: {
                 catNumber: dto.catNumber,
                 cats: dto.cats,
-                network: toSdkNetwork(dto.network),
+                network: (0, backend_network_1.toSdkNetwork)(dto.network),
                 askSats: dto.askSats,
                 payTo: dto.payTo,
                 catTxid: dto.catTxid,
@@ -116,7 +94,7 @@ let ListingsService = ListingsService_1 = class ListingsService {
                     `new outpoint.`,
             });
         }
-        if (!catsArraysEqual(liveCats, dto.cats)) {
+        if (!(0, array_utils_1.catsArraysEqual)(liveCats, dto.cats)) {
             throw new common_1.BadRequestException({
                 code: 'cats-bundle-drift',
                 detail: `You signed for cats=[${dto.cats.join(',')}] but the UTXO now carries ` +

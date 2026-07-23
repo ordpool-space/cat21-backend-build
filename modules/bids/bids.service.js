@@ -17,52 +17,16 @@ const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
 const drizzle_orm_1 = require("drizzle-orm");
 const core_1 = require("ordpool-sdk/core");
-const core_2 = require("ordpool-sdk/core");
+const array_utils_1 = require("../shared/array-utils");
+const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const bids_1 = require("../shared/drizzle/schema/bids");
 const ord_client_service_1 = require("../sync/ord-client.service");
-function readBackendNetworkFromEnv() {
-    const raw = process.env.BACKEND_NETWORK;
-    const allowed = ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'];
-    if (raw && allowed.includes(raw)) {
-        return raw;
-    }
-    return 'mainnet';
-}
 const MARKETPLACE_FLOOR_SATS = 1_000;
-const CAT21_POSTAGE_SATS = 546;
-function toSdkNetwork(name) {
-    switch (name) {
-        case 'mainnet': return core_1.Network.Mainnet;
-        case 'testnet3': return core_1.Network.Testnet3;
-        case 'testnet4': return core_1.Network.Testnet4;
-        case 'signet': return core_1.Network.Signet;
-        case 'regtest': return core_1.Network.Regtest;
-    }
-}
-const REGTEST_NETWORK = { ...btc.TEST_NETWORK, bech32: 'bcrt' };
-function toScureNetwork(n) {
-    switch (n) {
-        case core_1.Network.Mainnet: return btc.NETWORK;
-        case core_1.Network.Testnet3:
-        case core_1.Network.Testnet4:
-        case core_1.Network.Signet:
-            return btc.TEST_NETWORK;
-        case core_1.Network.Regtest:
-            return REGTEST_NETWORK;
-    }
-}
-function catsArraysEqual(a, b) {
-    if (a.length !== b.length)
-        return false;
-    const sa = [...a].sort((x, y) => x - y);
-    const sb = [...b].sort((x, y) => x - y);
-    return sa.every((v, i) => v === sb[i]);
-}
 function scriptToAddress(script, network) {
     try {
         const decoded = btc.OutScript.decode(script);
-        return btc.Address(toScureNetwork(network)).encode(decoded);
+        return btc.Address((0, core_1.toScureNetwork)(network)).encode(decoded);
     }
     catch {
         return null;
@@ -73,7 +37,7 @@ let BidsService = BidsService_1 = class BidsService {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
         this.logger = new common_1.Logger(BidsService_1.name);
-        this.backendNetwork = readBackendNetworkFromEnv();
+        this.backendNetwork = (0, backend_network_1.readBackendNetworkFromEnv)();
         this.logger.log(`BidsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
     get network() {
@@ -134,7 +98,7 @@ let BidsService = BidsService_1 = class BidsService {
                 detail: 'PSBT must have 2 or 3 outputs (cat, seller-payment, optional buyer-change)',
             });
         }
-        const sdkNetwork = toSdkNetwork(dto.network);
+        const sdkNetwork = (0, backend_network_1.toSdkNetwork)(dto.network);
         const input0 = tx.getInput(0);
         const input0Txid = input0.txid ? base_1.hex.encode(input0.txid) : null;
         if (input0Txid !== dto.catTxid.toLowerCase() || input0.index !== dto.catVout) {
@@ -147,10 +111,10 @@ let BidsService = BidsService_1 = class BidsService {
         if (!out0.script) {
             throw new common_1.BadRequestException({ code: 'psbt-shape-invalid', detail: 'PSBT output 0 has no script' });
         }
-        if (Number(out0.amount ?? 0n) !== CAT21_POSTAGE_SATS) {
+        if (Number(out0.amount ?? 0n) !== core_1.CAT21_POSTAGE_SATS) {
             throw new common_1.BadRequestException({
                 code: 'psbt-shape-invalid',
-                detail: `PSBT output 0 must be exactly ${CAT21_POSTAGE_SATS} sats (cat postage); got ${out0.amount}`,
+                detail: `PSBT output 0 must be exactly ${core_1.CAT21_POSTAGE_SATS} sats (cat postage); got ${out0.amount}`,
             });
         }
         const out0Address = scriptToAddress(out0.script, sdkNetwork);
@@ -171,7 +135,7 @@ let BidsService = BidsService_1 = class BidsService {
                 detail: `PSBT output 1 pays ${out1Address ?? 'unknown'}, DTO claims ${dto.sellerPaymentAddress}`,
             });
         }
-        const expectedOut1 = dto.bidSats + CAT21_POSTAGE_SATS;
+        const expectedOut1 = dto.bidSats + core_1.CAT21_POSTAGE_SATS;
         if (Number(out1.amount) !== expectedOut1) {
             throw new common_1.BadRequestException({
                 code: 'psbt-price-mismatch',
@@ -191,7 +155,7 @@ let BidsService = BidsService_1 = class BidsService {
                 });
             }
         }
-        const sdkResult = (0, core_2.validateCat21BuyOfferPsbt)({
+        const sdkResult = (0, core_1.validateCat21BuyOfferPsbt)({
             psbt: psbtBytes,
             expectedSellerUtxo: { txid: dto.catTxid, vout: dto.catVout },
             floorPriceSats: 0,
@@ -222,7 +186,7 @@ let BidsService = BidsService_1 = class BidsService {
                     'or never held a cat).',
             });
         }
-        if (!catsArraysEqual(liveCats, dto.cats)) {
+        if (!(0, array_utils_1.catsArraysEqual)(liveCats, dto.cats)) {
             throw new common_1.BadRequestException({
                 code: 'cats-bundle-drift',
                 detail: `Buyer signed for cats=[${dto.cats.join(',')}] but the UTXO now carries ` +

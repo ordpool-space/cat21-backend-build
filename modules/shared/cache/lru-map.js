@@ -21,6 +21,10 @@ class LruMap {
     }
     set(key, value) {
         if (this.map.has(key)) {
+            const oldValue = this.map.get(key);
+            if (this.onEvict) {
+                this.onEvict(key, oldValue);
+            }
             this.map.delete(key);
         }
         else {
@@ -32,6 +36,10 @@ class LruMap {
         return this.map.has(key);
     }
     delete(key) {
+        const value = this.map.get(key);
+        if (value !== undefined && this.onEvict) {
+            this.onEvict(key, value);
+        }
         return this.map.delete(key);
     }
     clear() {

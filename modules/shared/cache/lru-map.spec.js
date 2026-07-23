@@ -47,6 +47,28 @@ describe('LruMap', () => {
         map.set('c', 3);
         expect(evicted).toEqual([['a', 1]]);
     });
+    it('fires onEvict on replace-in-place so secondary indexes drop the old value', () => {
+        const evicted = [];
+        const map = new lru_map_1.LruMap(2, {
+            onEvict: (k, v) => evicted.push([k, v]),
+        });
+        map.set('a', 1);
+        map.set('a', 2);
+        expect(evicted).toEqual([['a', 1]]);
+        expect(map.get('a')).toBe(2);
+    });
+    it('fires onEvict on explicit delete', () => {
+        const evicted = [];
+        const map = new lru_map_1.LruMap(3, {
+            onEvict: (k, v) => evicted.push([k, v]),
+        });
+        map.set('a', 1);
+        map.set('b', 2);
+        expect(map.delete('a')).toBe(true);
+        expect(evicted).toEqual([['a', 1]]);
+        expect(map.delete('missing')).toBe(false);
+        expect(evicted).toEqual([['a', 1]]);
+    });
     it('should resize and evict when shrinking', () => {
         const map = new lru_map_1.LruMap(5);
         map.set('a', 1);

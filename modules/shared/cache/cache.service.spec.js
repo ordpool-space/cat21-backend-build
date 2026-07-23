@@ -280,6 +280,7 @@ describe('CacheService', () => {
             cache.setCachedCat(makeCatDto(500, 'tx-original'));
             cache.setCachedCat(makeCatDto(500, 'tx-updated'));
             expect(cache.getCachedCatNumberByTxHash('tx-updated')).toBe(500);
+            expect(cache.getCachedCatNumberByTxHash('tx-original')).toBeUndefined();
             expect(cache.getCachedCat(500)?.txHash).toBe('tx-updated');
         });
         it('preserves pinned cats txHash index across many insertions', () => {
