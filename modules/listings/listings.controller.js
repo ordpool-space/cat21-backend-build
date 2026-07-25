@@ -17,6 +17,7 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
+const cat21_session_guard_1 = require("../shared/cat21-session.guard");
 const create_listing_dto_1 = require("./dto/create-listing.dto");
 const listing_dto_1 = require("./dto/listing.dto");
 const listings_service_1 = require("./listings.service");
@@ -26,9 +27,9 @@ let ListingsController = class ListingsController {
     constructor(listings) {
         this.listings = listings;
     }
-    async create(dto, reply) {
+    async create(dto, sessionAddress, reply) {
         try {
-            const created = await this.listings.create(dto);
+            const created = await this.listings.create(dto, sessionAddress);
             reply.header('Cache-Control', NO_STORE);
             return created;
         }
@@ -49,8 +50,8 @@ let ListingsController = class ListingsController {
     async findPaginated(itemsPerPage, currentPage) {
         return this.listings.findPaginated(itemsPerPage, currentPage);
     }
-    async delete(catNumber, reply) {
-        await this.listings.deleteByCatNumber(catNumber);
+    async delete(catNumber, sessionAddress, reply) {
+        await this.listings.deleteByCatNumberIfOwnedBy(catNumber, sessionAddress);
         reply.header('Cache-Control', NO_STORE);
     }
 };
@@ -59,37 +60,35 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(201),
     (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60_000 } }),
-    (0, common_1.UseGuards)(throttler_1.ThrottlerGuard),
+    (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
     (0, swagger_1.ApiOperation)({
         summary: 'Create or overwrite a cat listing',
-        description: "Publishes a seller-signed sell intent to the CAT-21 orderbook. The seller's ordinals " +
-            'wallet must sign the canonical listing message (per ordpool-sdk `buildListingMessage`) ' +
-            'via BIP-322. The server verifies the signature and cross-checks with ord that the ' +
-            'DTO\'s `ordinalsAddress` really owns cat #`catNumber` at outpoint `catTxid:catVout` ' +
-            "RIGHT NOW. Any tamper / staleness / attacker-signature is rejected with a specific " +
-            'error code. cat_number is unique — re-POSTing for a cat OVERWRITES the previous ' +
-            'listing (price change flow). Rate-limited to 5/min/IP.',
+        description: "Publishes a sell intent to the CAT-21 orderbook. Authentication is header-based " +
+            "via the Cat21SessionGuard (X-Cat21-Session-Address / -Valid-Until / -Signature). " +
+            "The session address must match `dto.ordinalsAddress`. The server cross-checks " +
+            "with ord that the address really owns cat #`catNumber` at outpoint `catTxid:catVout` " +
+            "RIGHT NOW. Any tamper is rejected with a specific error code. cat_number is unique " +
+            "— re-POSTing for a cat OVERWRITES the previous listing (price change flow). " +
+            "Rate-limited to 5/min/IP.",
     }),
     (0, swagger_1.ApiTooManyRequestsResponse)({ description: 'Exceeded 5 listing publishes per minute per IP.' }),
     (0, swagger_1.ApiCreatedResponse)({ type: listing_dto_1.ListingDto }),
     (0, swagger_1.ApiBadRequestResponse)({
         description: 'Rejection with a code:\n' +
             '- `network-mismatch` — DTO network doesn\'t match this backend\'s deployment\n' +
-            '- `signature-too-old` — signedAt > 24h in the past\n' +
-            '- `signature-in-future` — signedAt > 1h in the future\n' +
-            '- `signature-malformed-signature` — base64 or witness structure decode failed\n' +
-            '- `signature-unsupported-address-type` — ordinalsAddress is not P2TR\n' +
-            '- `signature-invalid-address` — ordinalsAddress does not decode\n' +
-            '- `signature-signature-does-not-verify` — schnorr verify returned false\n' +
+            '- `session-address-mismatch` — session address ≠ dto.ordinalsAddress\n' +
+            '- `headline-not-in-bundle` — catNumber not in cats[]\n' +
             '- `ord-lookup-failed` — upstream ord unreachable\n' +
             '- `cat-not-found` — ord does not know this cat (or it sits at an unspendable output)\n' +
-            '- `not-current-owner` — signature valid but the address does not own the cat right now\n' +
-            '- `outpoint-mismatch` — cat has moved since signing; re-sign against the current UTXO',
+            '- `cats-bundle-drift` — signed cats bundle no longer matches the UTXO\n' +
+            '- `not-current-owner` — session address is not the current on-chain owner\n' +
+            '- `outpoint-mismatch` — cat has moved; re-submit against the current UTXO',
     }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __param(1, (0, cat21_session_guard_1.Cat21SessionAddress)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_listing_dto_1.CreateListingDto, Object]),
+    __metadata("design:paramtypes", [create_listing_dto_1.CreateListingDto, String, Object]),
     __metadata("design:returntype", Promise)
 ], ListingsController.prototype, "create", null);
 __decorate([
@@ -144,17 +143,20 @@ __decorate([
 __decorate([
     (0, common_1.Delete)('cat/:catNumber'),
     (0, common_1.HttpCode)(204),
+    (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
+    (0, throttler_1.Throttle)({ default: { limit: 30, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({
-        summary: 'Delete a listing (server-side; used by the pruner + future cancel flow)',
-        description: 'Removes the listing for cat #catNumber. No auth today — the pruner is the primary ' +
-            'caller. A future seller-side cancel flow will require a signature over a "cancel" ' +
-            'message.',
+        summary: 'Delete a listing (seller unlists)',
+        description: 'Removes the listing for cat #catNumber iff the session token proves control of ' +
+            "the listing's `ordinalsAddress`. The pruner uses ListingsService directly and is " +
+            "unaffected by this route's auth.",
     }),
-    (0, swagger_1.ApiNoContentResponse)({ description: 'Deleted (or already absent).' }),
+    (0, swagger_1.ApiNoContentResponse)({ description: 'Deleted (or already absent — a wrong-owner request also 204s without leaking whether the row existed).' }),
     __param(0, (0, common_1.Param)('catNumber', common_1.ParseIntPipe)),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __param(1, (0, cat21_session_guard_1.Cat21SessionAddress)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:paramtypes", [Number, String, Object]),
     __metadata("design:returntype", Promise)
 ], ListingsController.prototype, "delete", null);
 exports.ListingsController = ListingsController = __decorate([

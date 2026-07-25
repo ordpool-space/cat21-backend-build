@@ -17,6 +17,7 @@ const openapi = require("@nestjs/swagger");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
+const cat21_session_guard_1 = require("../shared/cat21-session.guard");
 const bid_dto_1 = require("./dto/bid.dto");
 const create_bid_dto_1 = require("./dto/create-bid.dto");
 const bids_service_1 = require("./bids.service");
@@ -45,7 +46,13 @@ let BidsController = class BidsController {
     async findPaginated(itemsPerPage, currentPage) {
         return this.bids.findPaginated(itemsPerPage, currentPage);
     }
-    async delete(catTxid, catVout, buyerOrdinalsAddress, reply) {
+    async delete(catTxid, catVout, buyerOrdinalsAddress, sessionAddress, reply) {
+        if (sessionAddress !== buyerOrdinalsAddress) {
+            throw new common_1.UnauthorizedException({
+                code: 'session-address-mismatch',
+                detail: 'Session token proves control of a different address than ?buyer=.',
+            });
+        }
         await this.bids.deleteByOutpointAndBuyer(this.bids.network, catTxid, catVout, buyerOrdinalsAddress);
         reply.header('Cache-Control', NO_STORE);
     }
@@ -128,22 +135,27 @@ __decorate([
 __decorate([
     (0, common_1.Delete)('outpoint/:catTxid/:catVout'),
     (0, common_1.HttpCode)(204),
+    (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
+    (0, throttler_1.Throttle)({ default: { limit: 30, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({
-        summary: 'Delete a bid (server-side; used by the pruner + future buyer-side cancel flow)',
-        description: 'Removes the bid uniquely identified by (catTxid, catVout, buyer_ordinals_address). ' +
-            'No auth today — the pruner is the primary caller. A future buyer-side cancel flow will ' +
-            "require a signature over a 'cancel' message.",
+        summary: 'Delete a bid (buyer cancels)',
+        description: 'Removes the bid uniquely identified by (catTxid, catVout, ' +
+            'buyer_ordinals_address). Requires the session-token headers ' +
+            '(X-Cat21-Session-Address / -Valid-Until / -Signature) proving ' +
+            'control of `?buyer=`. The pruner uses BidsService directly and ' +
+            'is unaffected by this route\'s auth.',
     }),
     (0, swagger_1.ApiParam)({ name: 'catTxid', description: 'Cat UTXO txid.' }),
     (0, swagger_1.ApiParam)({ name: 'catVout', example: 0 }),
-    (0, swagger_1.ApiQuery)({ name: 'buyer', description: 'Buyer ordinals address (unique-key second half).' }),
+    (0, swagger_1.ApiQuery)({ name: 'buyer', description: 'Buyer ordinals address (unique-key second half). Must match the session address.' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'Deleted (or already absent).' }),
     __param(0, (0, common_1.Param)('catTxid')),
     __param(1, (0, common_1.Param)('catVout', common_1.ParseIntPipe)),
     __param(2, (0, common_1.Query)('buyer')),
-    __param(3, (0, common_1.Res)({ passthrough: true })),
+    __param(3, (0, cat21_session_guard_1.Cat21SessionAddress)()),
+    __param(4, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number, String, Object]),
+    __metadata("design:paramtypes", [String, Number, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], BidsController.prototype, "delete", null);
 exports.BidsController = BidsController = __decorate([

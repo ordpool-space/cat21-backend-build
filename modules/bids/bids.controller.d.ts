@@ -8,5 +8,5 @@ export declare class BidsController {
     create(dto: CreateBidDto, reply: FastifyReply): Promise<BidDto>;
     findByOutpoint(catTxid: string, catVout: number, reply: FastifyReply): Promise<BidDto[]>;
     findPaginated(itemsPerPage: number, currentPage: number): Promise<PaginatedBidsDto>;
-    delete(catTxid: string, catVout: number, buyerOrdinalsAddress: string, reply: FastifyReply): Promise<void>;
+    delete(catTxid: string, catVout: number, buyerOrdinalsAddress: string, sessionAddress: string, reply: FastifyReply): Promise<void>;
 }

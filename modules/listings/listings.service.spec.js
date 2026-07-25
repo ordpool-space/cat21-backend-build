@@ -2,11 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const listings_service_1 = require("./listings.service");
-let mockVerify;
-let mockBuildMessage;
 jest.mock('ordpool-sdk/core', () => ({
-    buildListingMessage: (fields) => mockBuildMessage(fields),
-    verifyListingSignature: (args) => mockVerify(args),
     Network: {
         Mainnet: 'mainnet',
         Testnet3: 'testnet3',
@@ -31,8 +27,6 @@ const validDto = (over = {}) => ({
     catTxid: REAL_TXID,
     catVout: 0,
     ordinalsAddress: ORD_ADDR,
-    signedAt: NOW_S,
-    signature: 'AUHd69PrJQEv+oKTfZ8l+WROBHuy9HKrbFCJu7U1iK2iiEy1vMU5EfMtjc+VSHM7aU0SDbak5IUZRVno2P5mjSafAQ==',
     ...over,
 });
 const persistedRow = (over = {}) => ({
@@ -82,90 +76,24 @@ function createOrdMock(opts = {}) {
         }),
     };
 }
-describe('ListingsService.create — signature verification', () => {
-    beforeEach(() => {
-        mockVerify = jest.fn().mockReturnValue({ ok: true });
-        mockBuildMessage = jest.fn().mockReturnValue('some-message');
-        jest.spyOn(Date, 'now').mockReturnValue(NOW_S * 1000);
-    });
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-    it('rejects with signature-* code when verify returns ok=false', async () => {
-        mockVerify.mockReturnValue({ ok: false, reason: 'signature-does-not-verify', detail: 'schnorr false' });
-        const drizzle = createDrizzleMock();
-        const ord = createOrdMock();
-        const service = new listings_service_1.ListingsService(drizzle, ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'signature-signature-does-not-verify' }),
-        });
-        expect(ord.getCatCurrentLocation).not.toHaveBeenCalled();
-        expect(ord.getCatsAtOutput).not.toHaveBeenCalled();
-    });
-    it('maps every SDK rejection reason into a signature-* code', async () => {
-        const reasons = [
-            'malformed-signature',
-            'unsupported-address-type',
-            'invalid-address',
-            'signature-does-not-verify',
-        ];
-        for (const reason of reasons) {
-            mockVerify.mockReturnValue({ ok: false, reason });
-            const service = new listings_service_1.ListingsService(createDrizzleMock(), createOrdMock());
-            await expect(service.create(validDto())).rejects.toMatchObject({
-                response: expect.objectContaining({ code: `signature-${reason}` }),
-            });
-        }
-    });
-});
-describe('ListingsService.create — anti-replay window', () => {
-    beforeEach(() => {
-        mockVerify = jest.fn().mockReturnValue({ ok: true });
-        mockBuildMessage = jest.fn().mockReturnValue('some-message');
-        jest.spyOn(Date, 'now').mockReturnValue(NOW_S * 1000);
-    });
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-    it('rejects signature-too-old when signedAt is > 24h in the past', async () => {
+describe('ListingsService.create — session-address match', () => {
+    it('rejects session-address-mismatch when dto.ordinalsAddress differs from the session address', async () => {
         const service = new listings_service_1.ListingsService(createDrizzleMock(), createOrdMock());
-        await expect(service.create(validDto({ signedAt: NOW_S - 25 * 3600 }))).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'signature-too-old' }),
-        });
-    });
-    it('accepts a signedAt exactly at the 24h back edge (inclusive floor)', async () => {
-        const ord = createOrdMock();
-        const drizzle = createDrizzleMock({
-            limit: jest.fn().mockResolvedValue([persistedRow({ signedAt: NOW_S - 24 * 3600 })]),
-        });
-        const service = new listings_service_1.ListingsService(drizzle, ord);
-        await expect(service.create(validDto({ signedAt: NOW_S - 24 * 3600 }))).resolves.toBeDefined();
-    });
-    it('rejects signature-in-future when signedAt is > 1h in the future', async () => {
-        const service = new listings_service_1.ListingsService(createDrizzleMock(), createOrdMock());
-        await expect(service.create(validDto({ signedAt: NOW_S + 2 * 3600 }))).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'signature-in-future' }),
+        await expect(service.create(validDto(), OTHER_ORD_ADDR)).rejects.toMatchObject({
+            response: expect.objectContaining({ code: 'session-address-mismatch' }),
         });
     });
 });
 describe('ListingsService.create — network + headline pre-checks (v3)', () => {
-    beforeEach(() => {
-        mockVerify = jest.fn().mockReturnValue({ ok: true });
-        mockBuildMessage = jest.fn().mockReturnValue('some-message');
-        jest.spyOn(Date, 'now').mockReturnValue(NOW_S * 1000);
-    });
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
     it('rejects network-mismatch when the DTO network is not the backend deployment', async () => {
         const service = new listings_service_1.ListingsService(createDrizzleMock(), createOrdMock());
-        await expect(service.create(validDto({ network: 'testnet3' }))).rejects.toMatchObject({
+        await expect(service.create(validDto({ network: 'testnet3' }), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'network-mismatch' }),
         });
     });
     it('rejects headline-not-in-bundle when catNumber is not a member of cats', async () => {
         const service = new listings_service_1.ListingsService(createDrizzleMock(), createOrdMock());
-        await expect(service.create(validDto({ catNumber: 999, cats: [42, 100] }))).rejects.toMatchObject({
+        await expect(service.create(validDto({ catNumber: 999, cats: [42, 100] }), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'headline-not-in-bundle' }),
         });
     });
@@ -175,7 +103,7 @@ describe('ListingsService.create — network + headline pre-checks (v3)', () => 
             limit: jest.fn().mockResolvedValue([persistedRow({ catNumber: 0, catsOnUtxo: [0, 42, 100], headlineCatNumber: 0 })]),
         });
         const service = new listings_service_1.ListingsService(drizzle, ord);
-        await expect(service.create(validDto({ catNumber: 0, cats: [0, 42, 100] }))).resolves.toBeDefined();
+        await expect(service.create(validDto({ catNumber: 0, cats: [0, 42, 100] }), ORD_ADDR)).resolves.toBeDefined();
     });
     it('accepts a bundle where headline is a non-minimum member (presentational choice)', async () => {
         const ord = createOrdMock({ catsAtOutput: [0, 42, 100] });
@@ -183,13 +111,11 @@ describe('ListingsService.create — network + headline pre-checks (v3)', () => 
             limit: jest.fn().mockResolvedValue([persistedRow({ catsOnUtxo: [0, 42, 100] })]),
         });
         const service = new listings_service_1.ListingsService(drizzle, ord);
-        await expect(service.create(validDto({ catNumber: 42, cats: [0, 42, 100] }))).resolves.toBeDefined();
+        await expect(service.create(validDto({ catNumber: 42, cats: [0, 42, 100] }), ORD_ADDR)).resolves.toBeDefined();
     });
 });
 describe('ListingsService.create — on-chain cross-check', () => {
     beforeEach(() => {
-        mockVerify = jest.fn().mockReturnValue({ ok: true });
-        mockBuildMessage = jest.fn().mockReturnValue('some-message');
         jest.spyOn(Date, 'now').mockReturnValue(NOW_S * 1000);
     });
     afterEach(() => {
@@ -198,7 +124,7 @@ describe('ListingsService.create — on-chain cross-check', () => {
     it('rejects ord-lookup-failed when the /output call throws', async () => {
         const ord = createOrdMock({ throwOnCatsAtOutput: true });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'ord-lookup-failed' }),
         });
         expect(ord.getCatCurrentLocation).not.toHaveBeenCalled();
@@ -206,49 +132,49 @@ describe('ListingsService.create — on-chain cross-check', () => {
     it('rejects cat-not-found when /output returns null (UTXO unknown / spent)', async () => {
         const ord = createOrdMock({ catsAtOutput: null });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cat-not-found' }),
         });
     });
     it('rejects cat-not-found when /output returns an empty cats array (UTXO exists, no cats)', async () => {
         const ord = createOrdMock({ catsAtOutput: [] });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cat-not-found' }),
         });
     });
     it('rejects cats-bundle-drift when the live bundle differs from what was signed (extra cat)', async () => {
         const ord = createOrdMock({ catsAtOutput: [42, 99] });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto({ cats: [42] }))).rejects.toMatchObject({
+        await expect(service.create(validDto({ cats: [42] }), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cats-bundle-drift' }),
         });
     });
     it('rejects cats-bundle-drift when the live bundle differs (missing cat)', async () => {
         const ord = createOrdMock({ catsAtOutput: [42, 100] });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto({ catNumber: 42, cats: [0, 42, 100] }))).rejects.toMatchObject({
+        await expect(service.create(validDto({ catNumber: 42, cats: [0, 42, 100] }), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cats-bundle-drift' }),
         });
     });
     it('rejects ord-lookup-failed when the /cat lookup throws (after /output passed)', async () => {
         const ord = createOrdMock({ throwOnLookup: true });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'ord-lookup-failed' }),
         });
     });
     it('rejects cat-not-found when the headline-owner lookup returns null', async () => {
         const ord = createOrdMock({ location: null });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cat-not-found' }),
         });
     });
     it('rejects not-current-owner when the signature is valid but the address does not own the cat right now', async () => {
         const ord = createOrdMock({ location: { txid: REAL_TXID, vout: 0, ordinalsAddress: OTHER_ORD_ADDR } });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'not-current-owner' }),
         });
     });
@@ -258,15 +184,13 @@ describe('ListingsService.create — on-chain cross-check', () => {
             location: { txid: OTHER_TXID, vout: 0, ordinalsAddress: ORD_ADDR },
         });
         const service = new listings_service_1.ListingsService(createDrizzleMock(), ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'outpoint-mismatch' }),
         });
     });
 });
 describe('ListingsService.create — happy path + upsert', () => {
     beforeEach(() => {
-        mockVerify = jest.fn().mockReturnValue({ ok: true });
-        mockBuildMessage = jest.fn().mockReturnValue('some-message');
         jest.spyOn(Date, 'now').mockReturnValue(NOW_S * 1000);
     });
     afterEach(() => {
@@ -278,7 +202,7 @@ describe('ListingsService.create — happy path + upsert', () => {
             limit: jest.fn().mockResolvedValue([persistedRow()]),
         });
         const service = new listings_service_1.ListingsService(drizzle, ord);
-        const result = await service.create(validDto());
+        const result = await service.create(validDto(), ORD_ADDR);
         expect(result).toMatchObject({
             catNumber: 42,
             cats: [42],
@@ -299,7 +223,7 @@ describe('ListingsService.create — happy path + upsert', () => {
             limit: jest.fn().mockResolvedValue([persistedRow({ catNumber: 0, catsOnUtxo: [0, 42, 100], headlineCatNumber: 0 })]),
         });
         const service = new listings_service_1.ListingsService(drizzle, ord);
-        const result = await service.create(validDto({ catNumber: 0, cats: [0, 42, 100] }));
+        const result = await service.create(validDto({ catNumber: 0, cats: [0, 42, 100] }), ORD_ADDR);
         expect(result.cats).toEqual([0, 42, 100]);
         expect(result.catNumber).toBe(0);
     });
@@ -307,7 +231,7 @@ describe('ListingsService.create — happy path + upsert', () => {
         const ord = createOrdMock();
         const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([]) });
         const service = new listings_service_1.ListingsService(drizzle, ord);
-        await expect(service.create(validDto())).rejects.toMatchObject({
+        await expect(service.create(validDto(), ORD_ADDR)).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'persist-race' }),
         });
     });

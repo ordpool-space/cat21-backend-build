@@ -7,6 +7,4 @@ export declare class CreateListingDto {
     catTxid: string;
     catVout: number;
     ordinalsAddress: string;
-    signedAt: number;
-    signature: string;
 }

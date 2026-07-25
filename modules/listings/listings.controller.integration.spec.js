@@ -6,6 +6,7 @@ const platform_fastify_1 = require("@nestjs/platform-fastify");
 const testing_1 = require("@nestjs/testing");
 const throttler_1 = require("@nestjs/throttler");
 const no_store_on_error_filter_1 = require("../shared/no-store-on-error.filter");
+const cat21_session_guard_1 = require("../shared/cat21-session.guard");
 const listings_controller_1 = require("./listings.controller");
 const listings_service_1 = require("./listings.service");
 describe('ListingsController — error responses carry Cache-Control: no-store (integration)', () => {
@@ -19,9 +20,18 @@ describe('ListingsController — error responses carry Cache-Control: no-store (
             ],
             controllers: [listings_controller_1.ListingsController],
             providers: [
-                { provide: listings_service_1.ListingsService, useValue: { create: mockCreate, findByCatNumber: jest.fn(), findPaginated: jest.fn(), deleteByCatNumber: jest.fn() } },
+                { provide: listings_service_1.ListingsService, useValue: { create: mockCreate, findByCatNumber: jest.fn(), findPaginated: jest.fn(), deleteByCatNumber: jest.fn(), deleteByCatNumberIfOwnedBy: jest.fn() } },
             ],
-        }).compile();
+        })
+            .overrideGuard(cat21_session_guard_1.Cat21SessionGuard)
+            .useValue({
+            canActivate: (ctx) => {
+                const req = ctx.switchToHttp().getRequest();
+                req.cat21SessionAddress = 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq7pkrz9';
+                return true;
+            },
+        })
+            .compile();
         app = module.createNestApplication(new platform_fastify_1.FastifyAdapter({ logger: false }));
         app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
         app.useGlobalFilters(new no_store_on_error_filter_1.NoStoreOnErrorFilter(app.get(core_1.HttpAdapterHost)));
@@ -40,8 +50,6 @@ describe('ListingsController — error responses carry Cache-Control: no-store (
         catTxid: 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df',
         catVout: 0,
         ordinalsAddress: 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq7pkrz9',
-        signedAt: Math.floor(Date.now() / 1000),
-        signature: 'AUHd69PrJQEv+oKTfZ8l+WROBHuy9HKrbFCJu7U1iK2iiEy1vMU5EfMtjc+VSHM7aU0SDbak5IUZRVno2P5mjSafAQ==',
     });
     it('400 from ValidationPipe (missing required field) carries no-store', async () => {
         const res = await app.inject({

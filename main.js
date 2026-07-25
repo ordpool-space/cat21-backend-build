@@ -17,7 +17,29 @@ async function bootstrap() {
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: false,
     });
-    app.enableCors();
+    const allowedOrigins = [
+        'https://cat21.space',
+        'https://ordpool.space',
+        'http://localhost:4200',
+        'http://localhost:4221',
+    ];
+    app.enableCors({
+        origin: (origin, cb) => {
+            if (!origin)
+                return cb(null, true);
+            if (allowedOrigins.includes(origin))
+                return cb(null, true);
+            cb(null, false);
+        },
+        methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: [
+            'Content-Type',
+            'X-Cat21-Session-Address',
+            'X-Cat21-Session-Valid-Until',
+            'X-Cat21-Session-Signature',
+        ],
+        credentials: false,
+    });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,

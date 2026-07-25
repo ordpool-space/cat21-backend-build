@@ -13,14 +13,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListingsService = void 0;
 const common_1 = require("@nestjs/common");
 const drizzle_orm_1 = require("drizzle-orm");
-const core_1 = require("ordpool-sdk/core");
 const array_utils_1 = require("../shared/array-utils");
 const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const listings_1 = require("../shared/drizzle/schema/listings");
 const ord_client_service_1 = require("../sync/ord-client.service");
-const ANTI_REPLAY_MAX_AGE_S = 24 * 60 * 60;
-const CLOCK_SKEW_FUTURE_S = 60 * 60;
 let ListingsService = ListingsService_1 = class ListingsService {
     constructor(drizzle, ordClient) {
         this.drizzle = drizzle;
@@ -29,50 +26,23 @@ let ListingsService = ListingsService_1 = class ListingsService {
         this.backendNetwork = (0, backend_network_1.readBackendNetworkFromEnv)();
         this.logger.log(`ListingsService: BACKEND_NETWORK = ${this.backendNetwork}`);
     }
-    async create(dto) {
+    async create(dto, sellerOrdinalsAddress) {
         if (dto.network !== this.backendNetwork) {
             throw new common_1.BadRequestException({
                 code: 'network-mismatch',
-                detail: `Listing signed for network=${dto.network}; this backend serves ${this.backendNetwork}.`,
+                detail: `Listing targets network=${dto.network}; this backend serves ${this.backendNetwork}.`,
             });
         }
-        const nowS = Math.floor(Date.now() / 1000);
-        if (dto.signedAt < nowS - ANTI_REPLAY_MAX_AGE_S) {
+        if (dto.ordinalsAddress !== sellerOrdinalsAddress) {
             throw new common_1.BadRequestException({
-                code: 'signature-too-old',
-                detail: `signedAt is ${nowS - dto.signedAt}s in the past; max ${ANTI_REPLAY_MAX_AGE_S}s`,
-            });
-        }
-        if (dto.signedAt > nowS + CLOCK_SKEW_FUTURE_S) {
-            throw new common_1.BadRequestException({
-                code: 'signature-in-future',
-                detail: `signedAt is ${dto.signedAt - nowS}s in the future; max ${CLOCK_SKEW_FUTURE_S}s`,
+                code: 'session-address-mismatch',
+                detail: 'Session token proves control of a different address than dto.ordinalsAddress.',
             });
         }
         if (!dto.cats.includes(dto.catNumber)) {
             throw new common_1.BadRequestException({
                 code: 'headline-not-in-bundle',
                 detail: `catNumber ${dto.catNumber} is not a member of cats [${dto.cats.join(',')}]`,
-            });
-        }
-        const verifyResult = (0, core_1.verifyListingSignature)({
-            fields: {
-                catNumber: dto.catNumber,
-                cats: dto.cats,
-                network: (0, backend_network_1.toSdkNetwork)(dto.network),
-                askSats: dto.askSats,
-                payTo: dto.payTo,
-                catTxid: dto.catTxid,
-                catVout: dto.catVout,
-                ordinalsAddress: dto.ordinalsAddress,
-                signedAt: dto.signedAt,
-            },
-            signatureBase64: dto.signature,
-        });
-        if (!verifyResult.ok) {
-            throw new common_1.BadRequestException({
-                code: `signature-${verifyResult.reason}`,
-                detail: verifyResult.detail,
             });
         }
         let liveCats;
@@ -132,6 +102,7 @@ let ListingsService = ListingsService_1 = class ListingsService {
             });
         }
         const catsSorted = [...new Set(dto.cats)].sort((a, b) => a - b);
+        const insertedSignedAt = Math.floor(Date.now() / 1000);
         const row = {
             catNumber: dto.catNumber,
             cats: catsSorted,
@@ -141,8 +112,8 @@ let ListingsService = ListingsService_1 = class ListingsService {
             catTxid: dto.catTxid,
             catVout: dto.catVout,
             ordinalsAddress: dto.ordinalsAddress,
-            signedAt: dto.signedAt,
-            signature: dto.signature,
+            signedAt: insertedSignedAt,
+            signature: '',
         };
         await this.drizzle.db
             .insert(listings_1.listings)
@@ -226,6 +197,19 @@ let ListingsService = ListingsService_1 = class ListingsService {
     }
     async deleteByCatNumber(catNumber) {
         await this.drizzle.db.delete(listings_1.listings).where((0, drizzle_orm_1.eq)(listings_1.listings.catNumber, catNumber));
+    }
+    async deleteByCatNumberIfOwnedBy(catNumber, ordinalsAddress) {
+        const [existing] = await this.drizzle.db
+            .select({ id: listings_1.listings.id, ordinalsAddress: listings_1.listings.ordinalsAddress })
+            .from(listings_1.listings)
+            .where((0, drizzle_orm_1.eq)(listings_1.listings.catNumber, catNumber))
+            .limit(1);
+        if (!existing)
+            return false;
+        if (existing.ordinalsAddress !== ordinalsAddress)
+            return false;
+        await this.drizzle.db.delete(listings_1.listings).where((0, drizzle_orm_1.eq)(listings_1.listings.id, existing.id));
+        return true;
     }
     async deleteByIdIfUnchanged(id, signedAt) {
         await this.drizzle.db

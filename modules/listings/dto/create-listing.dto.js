@@ -16,14 +16,13 @@ const class_validator_1 = require("class-validator");
 const core_1 = require("ordpool-sdk/core");
 class CreateListingDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { catNumber: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 }, signedAt: { required: true, type: () => Number, minimum: 1 }, signature: { required: true, type: () => String, maxLength: 512 } };
+        return { catNumber: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 } };
     }
 }
 exports.CreateListingDto = CreateListingDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Headline cat number for display. Must be a member of `cats` (the SDK enforces this at ' +
-            'sign time; the backend re-verifies). 0 = Genesis Cat.',
+        description: 'Headline cat number for display. Must be a member of `cats`. 0 = Genesis Cat.',
         example: 42,
         minimum: 0,
     }),
@@ -33,11 +32,9 @@ __decorate([
 ], CreateListingDto.prototype, "catNumber", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Every cat currently riding on the UTXO the listing pins (`catTxid:catVout`). ' +
-            'Sorted ascending, deduped. The seller signs this exact array so the buyer sees the ' +
-            "full bundle they're paying for — a PSBT spends the whole UTXO, not individual sats. " +
-            "Backend cross-checks this against ord's `/output/<outpoint>` at insert time and " +
-            'rejects on drift with code `cats-bundle-drift`.',
+        description: 'Every cat currently riding on the UTXO (`catTxid:catVout`). Sorted ascending, ' +
+            'deduped. Backend cross-checks against ord\'s `/output/<outpoint>` at insert time ' +
+            'and rejects on drift with code `cats-bundle-drift`.',
         example: [42],
         type: [Number],
         minItems: 1,
@@ -51,7 +48,7 @@ __decorate([
 ], CreateListingDto.prototype, "cats", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Bitcoin network the seller signed against. Binds the signature to a specific network — a testnet-signed listing bytes replayed against mainnet is rejected as `signature-does-not-verify`. Full enum matches ordpool-sdk `Network`; per-deployment the backend only accepts one of these via `network-mismatch`.',
+        description: 'Bitcoin network. Backend rejects mismatched network via `network-mismatch`.',
         example: 'mainnet',
         enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'],
     }),
@@ -61,7 +58,7 @@ __decorate([
 ], CreateListingDto.prototype, "network", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: `Asking price in sats. Positive integer, capped at MAX_ASK_SATS (${core_1.MAX_ASK_SATS} = 21 M BTC — total supply). Any value above is rejected as nonsense.`,
+        description: `Asking price in sats. Positive integer, capped at MAX_ASK_SATS (${core_1.MAX_ASK_SATS} = 21M BTC).`,
         example: 21_000,
         minimum: 1,
         maximum: core_1.MAX_ASK_SATS,
@@ -73,9 +70,8 @@ __decorate([
 ], CreateListingDto.prototype, "askSats", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: "Seller's PAYMENT address (where sale proceeds land). Must be a valid Bitcoin address; " +
-            "the signature commits to this exact string. Never populated from an on-chain owner " +
-            'lookup — that returns the ordinals address, wrong context.',
+        description: "Seller's PAYMENT address (where sale proceeds land). Never populated from " +
+            'an on-chain owner lookup — that returns the ordinals address, wrong context.',
         example: 'bc1qz69ej270c3q9qvgt822t6pm3zdksk2x35j2jlm',
         maxLength: 128,
     }),
@@ -95,7 +91,7 @@ __decorate([
 ], CreateListingDto.prototype, "catTxid", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: "vout of the cat UTXO. Almost always 0 (cat sits on output 0 per FIFO), but non-zero permitted.",
+        description: "vout of the cat UTXO. Almost always 0 (FIFO), non-zero permitted.",
         example: 0,
         minimum: 0,
     }),
@@ -105,9 +101,8 @@ __decorate([
 ], CreateListingDto.prototype, "catVout", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: "Seller's ORDINALS address (where the cat sits, per ordinal theory FIFO). MUST match the " +
-            "on-chain owner at insert time — the server cross-checks this against ord's live inscription " +
-            'lookup before persisting. BIP-322 signature must verify against this address.',
+        description: "Seller's ORDINALS address (where the cat sits, per ordinal theory FIFO). MUST " +
+            "match the on-chain owner AND the session-token X-Cat21-Session-Address header.",
         example: 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq7pkrz9',
         maxLength: 128,
     }),
@@ -115,29 +110,4 @@ __decorate([
     (0, class_validator_1.MaxLength)(128),
     __metadata("design:type", String)
 ], CreateListingDto.prototype, "ordinalsAddress", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Unix seconds at signing time. Server rejects listings whose `signedAt` is more than ' +
-            '24h in the past or 1h in the future (loose sanity window to catch obviously-stale ' +
-            'submissions and clock-skewed spoofing attempts).',
-        example: 1_700_000_000,
-        minimum: 1,
-    }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(1),
-    __metadata("design:type", Number)
-], CreateListingDto.prototype, "signedAt", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({
-        description: 'Base64-encoded BIP-322 "simple" signature witness. For P2TR ordinals addresses (the only ' +
-            'kind cats live on today) this is either a raw 64-byte schnorr signature OR the wrapped ' +
-            "witness format Xverse/Leather/cat21-wallet emit (`numItems || sigLen || sigBytes`). Both " +
-            'accepted.',
-        example: 'AUHd69PrJQEv+oKTfZ8l+WROBHuy9HKrbFCJu7U1iK2iiEy1vMU5EfMtjc+VSHM7aU0SDbak5IUZRVno2P5mjSafAQ==',
-        maxLength: 512,
-    }),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MaxLength)(512),
-    __metadata("design:type", String)
-], CreateListingDto.prototype, "signature", void 0);
 //# sourceMappingURL=create-listing.dto.js.map
