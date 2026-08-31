@@ -122,16 +122,44 @@ describe('SyncService', () => {
         await Promise.all([sync1, sync2]);
         expect(ordClient.getLatestCatNumber).toHaveBeenCalledTimes(1);
     });
-    it('should handle partial batch failures gracefully (some cats fail)', async () => {
+    it('stops at the first gap and refuses to insert past it (contiguity invariant)', async () => {
         const { service, ordClient, insertMock } = createMocks(-1, 2);
         ordClient.getCat
             .mockResolvedValueOnce(makeCat(0))
             .mockRejectedValueOnce(new Error('timeout'))
             .mockResolvedValueOnce(makeCat(2));
         await service.sync();
-        expect(insertMock).toHaveBeenCalled();
+        expect(insertMock).toHaveBeenCalledTimes(1);
         const insertedValues = insertMock.mock.results[0].value.ignore.mock.results[0].value.values.mock.calls[0][0];
-        expect(insertedValues).toHaveLength(2);
+        expect(insertedValues).toHaveLength(1);
+        expect(insertedValues[0].catNumber).toBe(0);
+    });
+    it('does not advance localMax past a gap (next tick retries from the missing cat)', async () => {
+        const { service, ordClient, insertMock, cache } = createMocks(-1, 5);
+        ordClient.getCat
+            .mockResolvedValueOnce(makeCat(0))
+            .mockResolvedValueOnce(makeCat(1))
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(makeCat(3))
+            .mockResolvedValueOnce(makeCat(4));
+        await service.sync();
+        const inserted = insertMock.mock.results[0].value.ignore.mock.results[0].value.values.mock.calls[0][0];
+        expect(inserted).toHaveLength(2);
+        expect(inserted.map((r) => r.catNumber)).toEqual([0, 1]);
+        expect(cache.onNewCatsSynced).toHaveBeenCalledWith(1);
+        expect(cache.onNewCatsSynced).not.toHaveBeenCalledWith(2);
+        expect(cache.onNewCatsSynced).not.toHaveBeenCalledWith(5);
+        ordClient.getCat.mockReset();
+        ordClient.getCat
+            .mockResolvedValueOnce(makeCat(2))
+            .mockResolvedValueOnce(makeCat(3))
+            .mockResolvedValueOnce(makeCat(4));
+        await service.sync();
+        expect(ordClient.getCat).toHaveBeenCalledWith(2);
+        expect(ordClient.getCat).toHaveBeenCalledWith(3);
+        expect(ordClient.getCat).toHaveBeenCalledWith(4);
+        expect(ordClient.getCat).not.toHaveBeenCalledWith(0);
+        expect(ordClient.getCat).not.toHaveBeenCalledWith(1);
     });
     it('should break when entire batch fails (all cats return null or error)', async () => {
         const { service, ordClient, insertMock } = createMocks(-1, 2);

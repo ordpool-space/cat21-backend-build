@@ -19,7 +19,7 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
         this.logger = new common_1.Logger(ElectrsClientService_1.name);
         this.baseUrl = configService.getOrThrow('ELECTRS_API_URL');
     }
-    async isOutpointSpent(txid, vout) {
+    async getOutpointStatus(txid, vout) {
         const url = `${this.baseUrl}/tx/${txid}/outspend/${vout}`;
         let res;
         try {
@@ -30,13 +30,13 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
         }
         catch (err) {
             this.logger.warn(`electrs outspend fetch failed for ${txid}:${vout}: ${err instanceof Error ? err.message : err}`);
-            return false;
+            return 'unknown';
         }
         if (res.status === 404)
-            return false;
+            return 'spent';
         if (!res.ok) {
             this.logger.warn(`electrs outspend returned ${res.status} for ${txid}:${vout}`);
-            return false;
+            return 'unknown';
         }
         let body;
         try {
@@ -44,16 +44,19 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
         }
         catch (err) {
             this.logger.warn(`electrs outspend malformed JSON for ${txid}:${vout}: ${err instanceof Error ? err.message : err}`);
-            return false;
+            return 'unknown';
         }
         if (typeof body === 'object' &&
             body !== null &&
             'spent' in body &&
             typeof body.spent === 'boolean') {
-            return body.spent;
+            return body.spent ? 'spent' : 'unspent';
         }
         this.logger.warn(`electrs outspend unexpected shape for ${txid}:${vout}: ${JSON.stringify(body)}`);
-        return false;
+        return 'unknown';
+    }
+    async isOutpointSpent(txid, vout) {
+        return (await this.getOutpointStatus(txid, vout)) === 'spent';
     }
 };
 exports.ElectrsClientService = ElectrsClientService;

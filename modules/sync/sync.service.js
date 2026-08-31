@@ -112,14 +112,27 @@ let SyncService = SyncService_1 = class SyncService {
             this.logger.log(`Syncing cats #${this.localMax + 1} to #${remoteMax} (${totalToSync} cats)`);
             let nextCatNumber = this.localMax + 1;
             let insertedCount = 0;
+            let firstMissing = null;
             while (nextCatNumber <= remoteMax) {
                 const batchEnd = Math.min(nextCatNumber + BATCH_SIZE, remoteMax + 1);
                 const numbers = Array.from({ length: batchEnd - nextCatNumber }, (_, i) => nextCatNumber + i);
                 const settled = await Promise.allSettled(numbers.map((n) => this.ordClient.getCat(n)));
-                const details = settled
-                    .filter((r) => r.status === 'fulfilled')
-                    .map((r) => r.value)
-                    .filter((d) => d !== null);
+                const details = [];
+                for (let i = 0; i < settled.length; i++) {
+                    const r = settled[i];
+                    const detail = r.status === 'fulfilled' ? r.value : null;
+                    if (detail === null) {
+                        firstMissing = numbers[i];
+                        const reason = r.status === 'rejected'
+                            ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
+                            : 'null (ord 404)';
+                        this.logger.error(`sync: ord could not resolve cat #${firstMissing} (${reason}). ` +
+                            `CAT-21 numbering is contiguous — refusing to advance past this gap. ` +
+                            `Will retry next tick; if this persists, check ord health.`);
+                        break;
+                    }
+                    details.push(detail);
+                }
                 if (details.length === 0)
                     break;
                 const rows = details.map((detail) => {
@@ -173,18 +186,26 @@ let SyncService = SyncService_1 = class SyncService {
                 const batchMax = rows[rows.length - 1].catNumber;
                 this.cache.onNewCatsSynced(batchMax);
                 insertedCount += details.length;
-                nextCatNumber += numbers.length;
+                nextCatNumber += details.length;
                 if (insertedCount % 100 < BATCH_SIZE) {
                     this.logger.log(`Synced ${insertedCount}/${totalToSync} cats (up to #${nextCatNumber - 1})`);
                 }
+                if (firstMissing !== null)
+                    break;
             }
-            this.localMax = remoteMax;
-            this.cache.onNewCatsSynced(remoteMax);
+            this.localMax = nextCatNumber - 1;
+            this.cache.onNewCatsSynced(this.localMax);
             const [sumResult] = await this.drizzle.db
                 .select({ proofOfCatWork: (0, drizzle_orm_1.sum)(cats_1.cats.fee) })
                 .from(cats_1.cats);
             this.cache.setProofOfCatWork(Number(sumResult.proofOfCatWork ?? 0));
-            this.logger.log(`Sync complete: ${insertedCount} new cats (synced up to #${remoteMax})`);
+            if (firstMissing !== null) {
+                this.logger.warn(`Sync partial: ${insertedCount} new cats (synced up to #${this.localMax}, ` +
+                    `stopped at #${firstMissing}; remote tip is #${remoteMax}). Retrying next tick.`);
+            }
+            else {
+                this.logger.log(`Sync complete: ${insertedCount} new cats (synced up to #${remoteMax})`);
+            }
             this.lastSuccessAt = new Date();
             if (insertedCount > 0) {
                 await this.recomputeRarityForAllCategories().catch((e) => {

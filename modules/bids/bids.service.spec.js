@@ -131,6 +131,13 @@ function createOrdMock(opts = {}) {
         }),
     };
 }
+function createElectrsMock(opts = {}) {
+    const status = opts.status ?? 'unspent';
+    return {
+        getOutpointStatus: jest.fn().mockResolvedValue(status),
+        isOutpointSpent: jest.fn().mockResolvedValue(status === 'spent'),
+    };
+}
 describe('BidsService.create — pre-checks (cheap fails first)', () => {
     beforeEach(() => {
         mockValidate = jest.fn().mockReturnValue({ ok: true, pricePaidSats: 21_000, postageSats: CAT21_POSTAGE_SATS });
@@ -142,7 +149,7 @@ describe('BidsService.create — pre-checks (cheap fails first)', () => {
         jest.restoreAllMocks();
     });
     it('rejects network-mismatch when DTO network is not the backend deployment', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto({ network: 'testnet3' }))).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'network-mismatch' }),
         });
@@ -152,7 +159,7 @@ describe('BidsService.create — pre-checks (cheap fails first)', () => {
         const prev = process.env.BACKEND_NETWORK;
         process.env.BACKEND_NETWORK = 'regtest';
         try {
-            const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+            const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
             await expect(service.create(validDto({ network: 'mainnet' }))).rejects.toMatchObject({
                 response: expect.objectContaining({
                     code: 'network-mismatch',
@@ -168,14 +175,14 @@ describe('BidsService.create — pre-checks (cheap fails first)', () => {
         }
     });
     it('rejects headline-not-in-bundle when headlineCatNumber is missing from cats', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto({ headlineCatNumber: 999, cats: [42, 100] }))).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'headline-not-in-bundle' }),
         });
         expect(mockFromPSBT).not.toHaveBeenCalled();
     });
     it('rejects bid-below-marketplace-floor for bidSats below the spam gate', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto({ bidSats: 500 }))).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'bid-below-marketplace-floor' }),
         });
@@ -193,67 +200,76 @@ describe('BidsService.create — PSBT decode + shape', () => {
         jest.restoreAllMocks();
     });
     it('rejects psbt-malformed when base64 decode fails', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto({ psbtBase64: '@@@invalid base64@@@' }))).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'psbt-malformed' }),
         });
     });
     it('rejects psbt-malformed when scure Transaction.fromPSBT throws', async () => {
         mockFromPSBT.mockImplementation(() => { throw new Error('bad PSBT magic'); });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'psbt-malformed' }),
         });
     });
     it('rejects psbt-shape-invalid when PSBT has only 1 input (no buyer funding)', async () => {
         buildPsbtMock({ inputsLength: 1 });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'psbt-shape-invalid' }),
         });
     });
     it('rejects psbt-shape-invalid when PSBT has 4 outputs (over the 3 max)', async () => {
         buildPsbtMock({ outputsLength: 4 });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'psbt-shape-invalid' }),
         });
     });
-    it('rejects psbt-input0-mismatch when PSBT input 0 outpoint disagrees with DTO', async () => {
-        buildPsbtMock({ input0Txid: OTHER_TXID });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+    it('propagates SDK missing-seller-input as psbt-missing-seller-input (was psbt-input0-mismatch pre-#15)', async () => {
+        buildPsbtMock();
+        mockValidate.mockReturnValue({ ok: false, reason: 'missing-seller-input', detail: 'stub' });
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'psbt-input0-mismatch' }),
+            response: expect.objectContaining({ code: 'psbt-missing-seller-input' }),
         });
     });
-    it('rejects psbt-shape-invalid when PSBT output 0 is not exactly 546 sats (cat postage)', async () => {
-        buildPsbtMock({ out0Amount: 1000 });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+    it('propagates SDK wrong-postage as psbt-wrong-postage (was psbt-shape-invalid pre-#15)', async () => {
+        buildPsbtMock();
+        mockValidate.mockReturnValue({ ok: false, reason: 'wrong-postage', detail: 'stub' });
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'psbt-shape-invalid' }),
+            response: expect.objectContaining({ code: 'psbt-wrong-postage' }),
         });
     });
-    it('rejects psbt-output0-mismatch when PSBT output 0 address ≠ DTO buyerOrdinalsAddress', async () => {
-        mockOutScriptDecode.mockReturnValue({ marker: true });
-        mockAddressEncode.mockReturnValueOnce('bc1p-different-address').mockReturnValue(SELLER_PAY_ADDR);
-        mockFromPSBT.mockReturnValue({
-            inputsLength: 2,
-            outputsLength: 2,
-            getInput: () => ({ txid: new Uint8Array(REAL_TXID.match(/../g).map((h) => parseInt(h, 16))), index: 0 }),
-            getOutput: (i) => i === 0
-                ? { script: new Uint8Array([1]), amount: BigInt(CAT21_POSTAGE_SATS) }
-                : { script: new Uint8Array([2]), amount: BigInt(21_000 + CAT21_POSTAGE_SATS) },
-        });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+    it('propagates SDK cat-output-wrong-address as psbt-cat-output-wrong-address (was psbt-output0-mismatch pre-#15)', async () => {
+        buildPsbtMock();
+        mockValidate.mockReturnValue({ ok: false, reason: 'cat-output-wrong-address', detail: 'stub' });
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'psbt-output0-mismatch' }),
+            response: expect.objectContaining({ code: 'psbt-cat-output-wrong-address' }),
         });
     });
-    it('rejects psbt-price-mismatch when output 1 amount ≠ bidSats + postage', async () => {
-        buildPsbtMock({ out1Amount: 10_000 + CAT21_POSTAGE_SATS });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+    it('propagates SDK wrong-price-exact as psbt-wrong-price-exact (was psbt-price-mismatch pre-#15)', async () => {
+        buildPsbtMock();
+        mockValidate.mockReturnValue({ ok: false, reason: 'wrong-price-exact', detail: 'stub' });
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
-            response: expect.objectContaining({ code: 'psbt-price-mismatch' }),
+            response: expect.objectContaining({ code: 'psbt-wrong-price-exact' }),
+        });
+    });
+    it('wires every expected* arg into the SDK validator call', async () => {
+        buildPsbtMock();
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
+        await service.create(validDto()).catch(() => { });
+        expect(mockValidate).toHaveBeenCalledTimes(1);
+        const call = mockValidate.mock.calls[0][0];
+        expect(call).toMatchObject({
+            expectedSellerUtxo: { txid: REAL_TXID, vout: 0 },
+            expectedSellerPaymentAddress: SELLER_PAY_ADDR,
+            expectedBuyerReceiveAddress: BUYER_ORD_ADDR,
+            expectedBuyerChangeAddress: BUYER_PAY_ADDR,
+            expectedExactPrice: 21_000,
         });
     });
 });
@@ -270,34 +286,45 @@ describe('BidsService.create — SDK validator + ord', () => {
     });
     it('surfaces SDK rejections as psbt-* codes', async () => {
         mockValidate.mockReturnValue({ ok: false, reason: 'sighash-not-all', detail: 'buyer input 1 is SIGHASH_NONE' });
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'psbt-sighash-not-all' }),
         });
     });
     it('rejects ord-lookup-failed when the /output call throws', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ throwOnCatsAtOutput: true }));
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ throwOnCatsAtOutput: true }), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'ord-lookup-failed' }),
         });
     });
     it('rejects cat-not-found when /output returns null', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: null }));
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: null }), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cat-not-found' }),
         });
     });
     it('rejects cat-not-found when /output returns empty cats', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: [] }));
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: [] }), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cat-not-found' }),
         });
     });
     it('rejects cats-bundle-drift when the live bundle differs from the signed one', async () => {
-        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: [42, 99] }));
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ catsAtOutput: [42, 99] }), createElectrsMock());
         await expect(service.create(validDto({ cats: [42] }))).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'cats-bundle-drift' }),
         });
+    });
+    it('rejects psbt-buyer-input-unspendable when electrs reports a buyer input as spent (phantom txid or double-spend)', async () => {
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock({ status: 'spent' }));
+        await expect(service.create(validDto())).rejects.toMatchObject({
+            response: expect.objectContaining({ code: 'psbt-buyer-input-unspendable' }),
+        });
+    });
+    it('accepts a bid when electrs reports the buyer input as `unknown` (fail-safe on electrs blip)', async () => {
+        const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow()]) });
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock({ status: 'unknown' }));
+        await expect(service.create(validDto())).resolves.toBeDefined();
     });
 });
 describe('BidsService.create — happy path + upsert', () => {
@@ -313,7 +340,7 @@ describe('BidsService.create — happy path + upsert', () => {
     });
     it('inserts on ok + on-chain match and reads back the DTO', async () => {
         const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow()]) });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock());
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         const result = await service.create(validDto());
         expect(result).toMatchObject({
             network: 'mainnet',
@@ -333,13 +360,13 @@ describe('BidsService.create — happy path + upsert', () => {
         const drizzle = createDrizzleMock({
             limit: jest.fn().mockResolvedValue([persistedRow({ catsOnUtxo: [0, 42, 100], headlineCatNumber: 0 })]),
         });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock({ catsAtOutput: [0, 42, 100] }));
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock({ catsAtOutput: [0, 42, 100] }), createElectrsMock());
         const result = await service.create(validDto({ cats: [0, 42, 100], headlineCatNumber: 0 }));
         expect(result.cats).toEqual([0, 42, 100]);
     });
     it('throws persist-race when readback returns nothing (concurrent prune)', async () => {
         const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([]) });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock());
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         await expect(service.create(validDto())).rejects.toMatchObject({
             response: expect.objectContaining({ code: 'persist-race' }),
         });
@@ -352,7 +379,7 @@ describe('BidsService.findByOutpoint (seller view — bids on my cat)', () => {
             persistedRow({ id: 'b', bidSats: 21_000, buyerOrdinalsAddress: 'bc1p-b' }),
         ];
         const drizzle = createDrizzleMock({ orderBy: jest.fn().mockResolvedValue(rows) });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock());
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         const result = await service.findByOutpoint('mainnet', REAL_TXID, 0);
         expect(result).toHaveLength(2);
         expect(result[0].bidSats).toBe(30_000);
@@ -360,12 +387,12 @@ describe('BidsService.findByOutpoint (seller view — bids on my cat)', () => {
     });
     it('returns empty array when no bids exist on the UTXO', async () => {
         const drizzle = createDrizzleMock({ orderBy: jest.fn().mockResolvedValue([]) });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock());
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         expect(await service.findByOutpoint('mainnet', OTHER_TXID, 0)).toEqual([]);
     });
 });
 describe('BidsService.findPaginated — bounds', () => {
-    const service = () => new bids_service_1.BidsService(createDrizzleMock(), createOrdMock());
+    const service = () => new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
     it('rejects itemsPerPage=0', async () => {
         await expect(service().findPaginated(0, 1)).rejects.toBeInstanceOf(common_1.BadRequestException);
     });
@@ -382,7 +409,7 @@ describe('BidsService.deleteByOutpointAndBuyer', () => {
         const drizzle = createDrizzleMock({
             delete: jest.fn().mockReturnValue({ where }),
         });
-        const service = new bids_service_1.BidsService(drizzle, createOrdMock());
+        const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         await service.deleteByOutpointAndBuyer('mainnet', REAL_TXID, 0, BUYER_ORD_ADDR);
         expect(drizzle.db.delete).toHaveBeenCalled();
         expect(where).toHaveBeenCalled();

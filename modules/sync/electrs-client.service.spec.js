@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const electrs_client_service_1 = require("./electrs-client.service");
-describe('ElectrsClientService.isOutpointSpent', () => {
+describe('ElectrsClientService', () => {
     const TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
     const BASE_URL = 'https://api.example.test/api';
     let originalFetch;
@@ -27,44 +27,52 @@ describe('ElectrsClientService.isOutpointSpent', () => {
             return Promise.resolve(response);
         });
     }
-    it('returns true when electrs responds {spent: true}', async () => {
+    it('returns `spent` when electrs responds {spent: true}', async () => {
         stubFetch(200, { spent: true });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('spent');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(true);
     });
-    it('returns false when electrs responds {spent: false}', async () => {
+    it('returns `unspent` when electrs responds {spent: false}', async () => {
         stubFetch(200, { spent: false });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unspent');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
-    it('returns false on a 404 (txid unknown to electrs — phantom, treat as live)', async () => {
+    it('collapses a 404 into `spent` (phantom txid → unbroadcastable → prune)', async () => {
         stubFetch(404, null);
         const client = makeClient();
-        expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('spent');
+        expect(await client.isOutpointSpent(TXID, 0)).toBe(true);
     });
-    it('returns false on a 500 (fail-safe: transient error must not cascade to a drop)', async () => {
+    it('returns `unknown` on a 500 (fail-safe: transient error must not cascade)', async () => {
         stubFetch(500, null);
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
-    it('returns false on a network error (fetch rejects)', async () => {
+    it('returns `unknown` on a network error (fetch rejects)', async () => {
         stubFetch(0, null, { throw: new Error('ENOTFOUND') });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
-    it('returns false on malformed JSON', async () => {
+    it('returns `unknown` on malformed JSON', async () => {
         stubFetch(200, null, { badJson: true });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
-    it('returns false when the response body is missing the `spent` field', async () => {
+    it('returns `unknown` when the response body is missing the `spent` field', async () => {
         stubFetch(200, { status: 'confirmed' });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
-    it('returns false when the response body\'s `spent` is not a boolean', async () => {
+    it('returns `unknown` when the response body\'s `spent` is not a boolean', async () => {
         stubFetch(200, { spent: 'yes' });
         const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
     });
     it('builds the correct URL (/tx/{txid}/outspend/{vout})', async () => {

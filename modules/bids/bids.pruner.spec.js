@@ -46,10 +46,14 @@ function stubPsbt(buyerFundingTxids) {
         },
     });
 }
-function createElectrsMock(spent = {}) {
+function createElectrsMock(status = {}) {
+    const resolve = (txid) => status[txid] ?? 'unspent';
     return {
+        getOutpointStatus: jest.fn().mockImplementation((txid, _vout) => {
+            return Promise.resolve(resolve(txid));
+        }),
         isOutpointSpent: jest.fn().mockImplementation((txid, _vout) => {
-            return Promise.resolve(!!spent[txid]);
+            return Promise.resolve(resolve(txid) === 'spent');
         }),
     };
 }
@@ -69,7 +73,7 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();
         expect(ord.getCatsAtOutput).not.toHaveBeenCalled();
-        expect(electrs.isOutpointSpent).not.toHaveBeenCalled();
+        expect(electrs.getOutpointStatus).not.toHaveBeenCalled();
         expect(bidsSvc.deleteByOutpointAndBuyer).not.toHaveBeenCalled();
     });
     it('keeps a bid whose UTXO still carries the signed cats bundle AND all buyer inputs are live', async () => {
@@ -81,7 +85,7 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
         await pruner.runPrune();
         expect(bidsSvc.deleteByOutpointAndBuyer).not.toHaveBeenCalled();
         expect(ord.getCatsAtOutput).toHaveBeenCalledTimes(1);
-        expect(electrs.isOutpointSpent).toHaveBeenCalledTimes(1);
+        expect(electrs.getOutpointStatus).toHaveBeenCalledTimes(1);
     });
     it('drops on seller-side when the UTXO no longer holds cats (skips buyer-side check)', async () => {
         const drizzle = drizzleWithRows([row()]);
@@ -91,7 +95,7 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();
         expect(bidsSvc.deleteByOutpointAndBuyer).toHaveBeenCalledWith('mainnet', REAL_TXID, 0, BUYER_A);
-        expect(electrs.isOutpointSpent).not.toHaveBeenCalled();
+        expect(electrs.getOutpointStatus).not.toHaveBeenCalled();
     });
     it('drops on seller-side when the live cats bundle differs from the signed one', async () => {
         const drizzle = drizzleWithRows([row({ catsOnUtxo: [42] })]);
@@ -101,7 +105,7 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();
         expect(bidsSvc.deleteByOutpointAndBuyer).toHaveBeenCalledTimes(1);
-        expect(electrs.isOutpointSpent).not.toHaveBeenCalled();
+        expect(electrs.getOutpointStatus).not.toHaveBeenCalled();
     });
     it('does NOT drop a bid when the ord lookup errors (transient — retry next tick)', async () => {
         const drizzle = drizzleWithRows([row()]);
@@ -124,7 +128,7 @@ describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
         stubPsbt([FUND_TXID_SPENT]);
         const drizzle = drizzleWithRows([row()]);
         const ord = { getCatsAtOutput: jest.fn().mockResolvedValue([42]) };
-        const electrs = createElectrsMock({ [FUND_TXID_SPENT]: true });
+        const electrs = createElectrsMock({ [FUND_TXID_SPENT]: 'spent' });
         const bidsSvc = { deleteByOutpointAndBuyer: jest.fn().mockResolvedValue(undefined) };
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();
@@ -134,7 +138,7 @@ describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
         stubPsbt([FUND_TXID_LIVE, FUND_TXID_SPENT, FUND_TXID_LIVE]);
         const drizzle = drizzleWithRows([row()]);
         const ord = { getCatsAtOutput: jest.fn().mockResolvedValue([42]) };
-        const electrs = createElectrsMock({ [FUND_TXID_SPENT]: true });
+        const electrs = createElectrsMock({ [FUND_TXID_SPENT]: 'spent' });
         const bidsSvc = { deleteByOutpointAndBuyer: jest.fn().mockResolvedValue(undefined) };
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();

@@ -11,7 +11,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var BidsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BidsService = void 0;
-exports.scriptToAddress = scriptToAddress;
 const common_1 = require("@nestjs/common");
 const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
@@ -21,21 +20,14 @@ const array_utils_1 = require("../shared/array-utils");
 const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const bids_1 = require("../shared/drizzle/schema/bids");
+const electrs_client_service_1 = require("../sync/electrs-client.service");
 const ord_client_service_1 = require("../sync/ord-client.service");
 const MARKETPLACE_FLOOR_SATS = 1_000;
-function scriptToAddress(script, network) {
-    try {
-        const decoded = btc.OutScript.decode(script);
-        return btc.Address((0, core_1.toScureNetwork)(network)).encode(decoded);
-    }
-    catch {
-        return null;
-    }
-}
 let BidsService = BidsService_1 = class BidsService {
-    constructor(drizzle, ordClient) {
+    constructor(drizzle, ordClient, electrsClient) {
         this.drizzle = drizzle;
         this.ordClient = ordClient;
+        this.electrsClient = electrsClient;
         this.logger = new common_1.Logger(BidsService_1.name);
         this.backendNetwork = (0, backend_network_1.readBackendNetworkFromEnv)();
         this.logger.log(`BidsService: BACKEND_NETWORK = ${this.backendNetwork}`);
@@ -99,67 +91,14 @@ let BidsService = BidsService_1 = class BidsService {
             });
         }
         const sdkNetwork = (0, backend_network_1.toSdkNetwork)(dto.network);
-        const input0 = tx.getInput(0);
-        const input0Txid = input0.txid ? base_1.hex.encode(input0.txid) : null;
-        if (input0Txid !== dto.catTxid.toLowerCase() || input0.index !== dto.catVout) {
-            throw new common_1.BadRequestException({
-                code: 'psbt-input0-mismatch',
-                detail: `PSBT input 0 = ${input0Txid}:${input0.index}, but DTO claims ${dto.catTxid}:${dto.catVout}.`,
-            });
-        }
-        const out0 = tx.getOutput(0);
-        if (!out0.script) {
-            throw new common_1.BadRequestException({ code: 'psbt-shape-invalid', detail: 'PSBT output 0 has no script' });
-        }
-        if (Number(out0.amount ?? 0n) !== core_1.CAT21_POSTAGE_SATS) {
-            throw new common_1.BadRequestException({
-                code: 'psbt-shape-invalid',
-                detail: `PSBT output 0 must be exactly ${core_1.CAT21_POSTAGE_SATS} sats (cat postage); got ${out0.amount}`,
-            });
-        }
-        const out0Address = scriptToAddress(out0.script, sdkNetwork);
-        if (!out0Address || out0Address !== dto.buyerOrdinalsAddress) {
-            throw new common_1.BadRequestException({
-                code: 'psbt-output0-mismatch',
-                detail: `PSBT output 0 pays ${out0Address ?? 'unknown'}, DTO claims ${dto.buyerOrdinalsAddress}`,
-            });
-        }
-        const out1 = tx.getOutput(1);
-        if (!out1.script || out1.amount === undefined) {
-            throw new common_1.BadRequestException({ code: 'psbt-shape-invalid', detail: 'PSBT output 1 has no script or amount' });
-        }
-        const out1Address = scriptToAddress(out1.script, sdkNetwork);
-        if (!out1Address || out1Address !== dto.sellerPaymentAddress) {
-            throw new common_1.BadRequestException({
-                code: 'psbt-output1-mismatch',
-                detail: `PSBT output 1 pays ${out1Address ?? 'unknown'}, DTO claims ${dto.sellerPaymentAddress}`,
-            });
-        }
-        const expectedOut1 = dto.bidSats + core_1.CAT21_POSTAGE_SATS;
-        if (Number(out1.amount) !== expectedOut1) {
-            throw new common_1.BadRequestException({
-                code: 'psbt-price-mismatch',
-                detail: `PSBT output 1 amount = ${out1.amount} sats, expected bidSats + postage = ${expectedOut1}`,
-            });
-        }
-        if (tx.outputsLength === 3) {
-            const out2 = tx.getOutput(2);
-            if (!out2.script) {
-                throw new common_1.BadRequestException({ code: 'psbt-shape-invalid', detail: 'PSBT output 2 has no script' });
-            }
-            const out2Address = scriptToAddress(out2.script, sdkNetwork);
-            if (!out2Address || out2Address !== dto.buyerPaymentAddress) {
-                throw new common_1.BadRequestException({
-                    code: 'psbt-output2-mismatch',
-                    detail: `PSBT output 2 pays ${out2Address ?? 'unknown'}, DTO claims ${dto.buyerPaymentAddress}`,
-                });
-            }
-        }
         const sdkResult = (0, core_1.validateCat21BuyOfferPsbt)({
             psbt: psbtBytes,
             expectedSellerUtxo: { txid: dto.catTxid, vout: dto.catVout },
             floorPriceSats: 0,
             expectedSellerPaymentAddress: dto.sellerPaymentAddress,
+            expectedBuyerReceiveAddress: dto.buyerOrdinalsAddress,
+            expectedBuyerChangeAddress: dto.buyerPaymentAddress,
+            expectedExactPrice: dto.bidSats,
             network: sdkNetwork,
         });
         if (!sdkResult.ok) {
@@ -167,6 +106,21 @@ let BidsService = BidsService_1 = class BidsService {
                 code: `psbt-${sdkResult.reason}`,
                 detail: sdkResult.detail ?? `SDK validator rejected: ${sdkResult.reason}`,
             });
+        }
+        for (let i = 1; i < tx.inputsLength; i++) {
+            const inp = tx.getInput(i);
+            if (!inp.txid)
+                continue;
+            const inpTxid = base_1.hex.encode(inp.txid);
+            const inpVout = inp.index ?? 0;
+            const status = await this.electrsClient.getOutpointStatus(inpTxid, inpVout);
+            if (status === 'spent') {
+                throw new common_1.BadRequestException({
+                    code: 'psbt-buyer-input-unspendable',
+                    detail: `PSBT input ${i} (${inpTxid}:${inpVout}) is unspendable — either the txid is ` +
+                        `unknown to electrs (never broadcast / orphaned) or the vout was already spent.`,
+                });
+            }
         }
         let liveCats;
         try {
@@ -295,6 +249,7 @@ exports.BidsService = BidsService;
 exports.BidsService = BidsService = BidsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [drizzle_service_1.DrizzleService,
-        ord_client_service_1.OrdClientService])
+        ord_client_service_1.OrdClientService,
+        electrs_client_service_1.ElectrsClientService])
 ], BidsService);
 //# sourceMappingURL=bids.service.js.map

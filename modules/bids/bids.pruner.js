@@ -128,8 +128,8 @@ let BidsPruner = BidsPruner_1 = class BidsPruner {
                 continue;
             const txid = base_1.hex.encode(inp.txid);
             const vout = inp.index ?? 0;
-            const spent = await this.electrsClient.isOutpointSpent(txid, vout);
-            if (spent)
+            const status = await this.electrsClient.getOutpointStatus(txid, vout);
+            if (status === 'spent')
                 return false;
         }
         return true;
