@@ -8,5 +8,6 @@ export declare class ElectrsClientService {
     private readonly baseUrl;
     constructor(configService: ConfigService);
     getOutpointStatus(txid: string, vout: number): Promise<OutpointStatus>;
+    private txExists;
     isOutpointSpent(txid: string, vout: number): Promise<boolean>;
 }

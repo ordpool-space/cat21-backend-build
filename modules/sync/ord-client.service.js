@@ -50,9 +50,14 @@ let OrdClientService = class OrdClientService {
             return null;
         if (!Array.isArray(out.cats))
             return [];
-        const sorted = Array.from(new Set(out.cats.filter((c) => Number.isInteger(c) && c >= 0)))
-            .sort((a, b) => a - b);
-        return sorted;
+        const numbers = await Promise.all(out.cats.map(async (entry) => {
+            if (typeof entry === 'number')
+                return Number.isInteger(entry) && entry >= 0 ? entry : null;
+            const cat = await this.getCat(entry);
+            return cat?.number ?? null;
+        }));
+        const resolved = numbers.filter((n) => n !== null && n >= 0);
+        return Array.from(new Set(resolved)).sort((a, b) => a - b);
     }
     async fetchJson(url, allow404 = false) {
         const res = await fetch(url, {

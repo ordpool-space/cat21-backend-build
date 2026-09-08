@@ -34,7 +34,7 @@ describe('CatsService', () => {
             const result = service.getHealth();
             expect(result.status).toBe('ok');
             expect(result.uptimeSec).toBeGreaterThanOrEqual(0);
-            expect(result.version).toBeDefined();
+            expect(result.version).toMatch(/^\d+\.\d+\.\d+/);
             expect(result.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
         });
     });

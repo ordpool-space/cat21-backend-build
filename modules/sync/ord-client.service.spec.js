@@ -87,5 +87,51 @@ describe('OrdClientService', () => {
             await expect(service.getLatestCatNumber()).rejects.toThrow('ord API error: 404');
         });
     });
+    describe('getCatsAtOutput', () => {
+        it('maps cat21-ord `/output` inscription-id strings to cat numbers', async () => {
+            jest.spyOn(global, 'fetch').mockImplementation((input) => {
+                const url = String(input);
+                if (url.includes('/output/')) {
+                    return Promise.resolve({
+                        ok: true,
+                        status: 200,
+                        json: () => Promise.resolve({ cats: ['bbb222i0', 'aaa111i0'] }),
+                    });
+                }
+                if (url.endsWith('/cat/aaa111i0')) {
+                    return Promise.resolve({
+                        ok: true,
+                        status: 200,
+                        json: () => Promise.resolve({ id: 'aaa111i0', number: 7 }),
+                    });
+                }
+                if (url.endsWith('/cat/bbb222i0')) {
+                    return Promise.resolve({
+                        ok: true,
+                        status: 200,
+                        json: () => Promise.resolve({ id: 'bbb222i0', number: 42 }),
+                    });
+                }
+                return Promise.reject(new Error(`unexpected url ${url}`));
+            });
+            expect(await service.getCatsAtOutput('deadbeef', 0)).toEqual([7, 42]);
+        });
+        it('returns [] when the output carries no cats', async () => {
+            jest.spyOn(global, 'fetch').mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: () => Promise.resolve({ cats: [] }),
+            });
+            expect(await service.getCatsAtOutput('deadbeef', 0)).toEqual([]);
+        });
+        it('returns null when ord 404s the outpoint', async () => {
+            jest.spyOn(global, 'fetch').mockResolvedValue({
+                ok: false,
+                status: 404,
+                statusText: 'Not Found',
+            });
+            expect(await service.getCatsAtOutput('deadbeef', 0)).toBeNull();
+        });
+    });
 });
 //# sourceMappingURL=ord-client.service.spec.js.map

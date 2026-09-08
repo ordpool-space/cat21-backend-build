@@ -22,7 +22,7 @@ export interface CatCurrentLocation {
     ordinalsAddress: string;
 }
 export interface OrdOutputDetail {
-    cats: number[];
+    cats: (string | number)[];
     inscriptions: string[];
     runes: Record<string, unknown>;
 }

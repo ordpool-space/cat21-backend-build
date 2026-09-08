@@ -27,6 +27,17 @@ describe('ElectrsClientService', () => {
             return Promise.resolve(response);
         });
     }
+    function stubFetchRoutes(routes) {
+        globalThis.fetch = jest.fn().mockImplementation((url) => {
+            const isExistenceProbe = /\/tx\/[0-9a-f]+$/i.test(url);
+            const r = isExistenceProbe ? routes.tx : routes.outspend;
+            return Promise.resolve({
+                status: r.status,
+                ok: r.status >= 200 && r.status < 300,
+                json: () => Promise.resolve(r.body ?? null),
+            });
+        });
+    }
     it('returns `spent` when electrs responds {spent: true}', async () => {
         stubFetch(200, { spent: true });
         const client = makeClient();
@@ -38,6 +49,22 @@ describe('ElectrsClientService', () => {
         const client = makeClient();
         expect(await client.getOutpointStatus(TXID, 0)).toBe('unspent');
         expect(await client.isOutpointSpent(TXID, 0)).toBe(false);
+    });
+    it('reports a phantom outpoint `spent`: /outspend says {spent:false} but /tx 404s', async () => {
+        stubFetchRoutes({ outspend: { status: 200, body: { spent: false } }, tx: { status: 404 } });
+        const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('spent');
+        expect(await client.isOutpointSpent(TXID, 0)).toBe(true);
+    });
+    it('reports a real unspent UTXO `unspent`: /outspend {spent:false} + /tx 200', async () => {
+        stubFetchRoutes({ outspend: { status: 200, body: { spent: false } }, tx: { status: 200 } });
+        const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unspent');
+    });
+    it('returns `unknown` when /outspend {spent:false} but the /tx probe 5xxs (fail-safe)', async () => {
+        stubFetchRoutes({ outspend: { status: 200, body: { spent: false } }, tx: { status: 503 } });
+        const client = makeClient();
+        expect(await client.getOutpointStatus(TXID, 0)).toBe('unknown');
     });
     it('collapses a 404 into `spent` (phantom txid → unbroadcastable → prune)', async () => {
         stubFetch(404, null);

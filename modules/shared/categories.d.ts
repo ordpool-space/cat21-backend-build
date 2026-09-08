@@ -1,4 +1,2 @@
-export declare const CATEGORY_RANGES: Record<string, [number, number, number]>;
-export declare const CATEGORIES: readonly string[];
+export { CATEGORY_RANGES, CATEGORIES, deriveCategory } from 'ordpool-parser';
 export declare const CATEGORY_VALUES: readonly string[];
-export declare function deriveCategory(catNumber: number): string;

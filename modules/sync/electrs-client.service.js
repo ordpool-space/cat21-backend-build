@@ -50,10 +50,37 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
             body !== null &&
             'spent' in body &&
             typeof body.spent === 'boolean') {
-            return body.spent ? 'spent' : 'unspent';
+            if (body.spent)
+                return 'spent';
+            const exists = await this.txExists(txid);
+            if (exists === 'missing')
+                return 'spent';
+            if (exists === 'unknown')
+                return 'unknown';
+            return 'unspent';
         }
         this.logger.warn(`electrs outspend unexpected shape for ${txid}:${vout}: ${JSON.stringify(body)}`);
         return 'unknown';
+    }
+    async txExists(txid) {
+        let res;
+        try {
+            res = await fetch(`${this.baseUrl}/tx/${txid}`, {
+                headers: { Accept: 'application/json' },
+                signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+            });
+        }
+        catch (err) {
+            this.logger.warn(`electrs /tx fetch failed for ${txid}: ${err instanceof Error ? err.message : err}`);
+            return 'unknown';
+        }
+        if (res.status === 404)
+            return 'missing';
+        if (!res.ok) {
+            this.logger.warn(`electrs /tx returned ${res.status} for ${txid}`);
+            return 'unknown';
+        }
+        return 'exists';
     }
     async isOutpointSpent(txid, vout) {
         return (await this.getOutpointStatus(txid, vout)) === 'spent';
