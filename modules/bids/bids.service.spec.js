@@ -415,4 +415,43 @@ describe('BidsService.deleteByOutpointAndBuyer', () => {
         expect(where).toHaveBeenCalled();
     });
 });
+function paginatedDrizzle(rows, total) {
+    const offset = jest.fn().mockResolvedValue(rows);
+    const rowsChain = {
+        from: jest.fn(() => rowsChain),
+        orderBy: jest.fn(() => rowsChain),
+        limit: jest.fn(() => rowsChain),
+        offset,
+    };
+    const countChain = { from: jest.fn().mockResolvedValue([{ total }]) };
+    return { db: { select: jest.fn((arg) => (arg === undefined ? rowsChain : countChain)) }, offset };
+}
+describe('BidsService.network', () => {
+    it('exposes the backend deployment network (mainnet by default in tests)', () => {
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
+        expect(service.network).toBe('mainnet');
+    });
+});
+describe('BidsService.findPaginated — happy path', () => {
+    it('maps rows to DTOs, passes through total, and applies the (page-1)*perPage offset', async () => {
+        const rows = [
+            persistedRow({ id: 'p1', bidSats: 25_000 }),
+            persistedRow({ id: 'p2', bidSats: 21_000 }),
+        ];
+        const mock = paginatedDrizzle(rows, 42);
+        const service = new bids_service_1.BidsService(mock, createOrdMock(), createElectrsMock());
+        const res = await service.findPaginated(25, 2);
+        expect(res).toMatchObject({ total: 42, currentPage: 2, itemsPerPage: 25 });
+        expect(res.items).toHaveLength(2);
+        expect(res.items[0]).toMatchObject({ id: 'p1', bidSats: 25_000, cats: [42] });
+        expect(res.items[1]).toMatchObject({ id: 'p2', bidSats: 21_000 });
+        expect(mock.offset).toHaveBeenCalledWith(25);
+    });
+    it('offset is 0 on page 1', async () => {
+        const mock = paginatedDrizzle([persistedRow()], 1);
+        const service = new bids_service_1.BidsService(mock, createOrdMock(), createElectrsMock());
+        await service.findPaginated(10, 1);
+        expect(mock.offset).toHaveBeenCalledWith(0);
+    });
+});
 //# sourceMappingURL=bids.service.spec.js.map

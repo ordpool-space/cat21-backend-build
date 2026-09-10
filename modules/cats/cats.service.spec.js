@@ -304,4 +304,67 @@ describe('CatsService', () => {
         });
     });
 });
+function selfChain(overrides = {}) {
+    const chain = {};
+    for (const m of ['from', 'where', 'orderBy', 'limit', 'offset']) {
+        chain[m] = jest.fn(() => chain);
+    }
+    Object.assign(chain, overrides);
+    return chain;
+}
+describe('CatsService.getCatNumbers', () => {
+    it('newest sort uses the in-memory cache shortcut (no DB hop)', async () => {
+        const cache = new cache_service_1.CacheService();
+        cache.setTotals(100, 99);
+        const service = new cats_service_1.CatsService(createMockDrizzle(), cache, createMockSync());
+        const res = await service.getCatNumbers(10, 1, 'newest');
+        expect(res).toMatchObject({ total: 100, currentPage: 1, itemsPerPage: 10 });
+        expect(res.catNumbers).toEqual([99, 98, 97, 96, 95, 94, 93, 92, 91, 90]);
+    });
+    it('rarity sort hits the DB ordered by rarityRank and returns those numbers', async () => {
+        const cache = new cache_service_1.CacheService();
+        cache.setTotals(100, 99);
+        const drizzle = createMockDrizzle({ offset: jest.fn().mockResolvedValue([{ catNumber: 0 }, { catNumber: 777 }]) });
+        const service = new cats_service_1.CatsService(drizzle, cache, createMockSync());
+        const res = await service.getCatNumbers(25, 1, 'rarity');
+        expect(res.catNumbers).toEqual([0, 777]);
+        expect(res).toMatchObject({ total: 100, currentPage: 1, itemsPerPage: 25 });
+    });
+});
+describe('CatsService.randomCatNumber', () => {
+    const cache = () => { const c = new cache_service_1.CacheService(); c.setTotals(100, 99); return c; };
+    it('returns null when the filtered count is zero', async () => {
+        const drizzle = { db: { select: jest.fn(() => selfChain({ where: jest.fn().mockResolvedValue([{ count: 0 }]) })) } };
+        const service = new cats_service_1.CatsService(drizzle, cache(), createMockSync());
+        expect(await service.randomCatNumber({})).toBeNull();
+    });
+    it('returns the cat number at the randomly-offset row when matches exist', async () => {
+        const countChain = selfChain({ where: jest.fn().mockResolvedValue([{ count: 5 }]) });
+        const pickChain = selfChain({ offset: jest.fn().mockResolvedValue([{ catNumber: 42 }]) });
+        const drizzle = { db: { select: jest.fn((proj) => ('count' in proj ? countChain : pickChain)) } };
+        const service = new cats_service_1.CatsService(drizzle, cache(), createMockSync());
+        expect(await service.randomCatNumber({})).toBe(42);
+    });
+});
+describe('CatsService.findSamplesByFeeRate', () => {
+    const cache = () => { const c = new cache_service_1.CacheService(); c.setTotals(100, 99); return c; };
+    it('returns [] for an empty rate list (no queries)', async () => {
+        const drizzle = { db: { select: jest.fn() } };
+        const service = new cats_service_1.CatsService(drizzle, cache(), createMockSync());
+        expect(await service.findSamplesByFeeRate([])).toEqual([]);
+        expect(drizzle.db.select).not.toHaveBeenCalled();
+    });
+    it('maps each rate to its nearest cat (null when no cat is in the +/-0.5 window), in input order', async () => {
+        const chain = selfChain({
+            limit: jest.fn().mockResolvedValueOnce([{ catNumber: 7 }]).mockResolvedValueOnce([]),
+        });
+        const drizzle = { db: { select: jest.fn(() => chain) } };
+        const service = new cats_service_1.CatsService(drizzle, cache(), createMockSync());
+        const res = await service.findSamplesByFeeRate([69, 999]);
+        expect(res).toEqual([
+            { feeRate: 69, catNumber: 7 },
+            { feeRate: 999, catNumber: null },
+        ]);
+    });
+});
 //# sourceMappingURL=cats.service.spec.js.map

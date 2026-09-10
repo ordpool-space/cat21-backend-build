@@ -494,4 +494,49 @@ describe('CacheService', () => {
         });
     });
 });
+describe('CacheService.invalidateCat', () => {
+    it('drops the cached cat AND its txHash index entry (via onEvict)', () => {
+        const c = new cache_service_1.CacheService();
+        const cat = makeCatDto(42, 'txhash-abc');
+        c.setCachedCat(cat);
+        expect(c.getCachedCat(42)).toBe(cat);
+        expect(c.getCachedCatNumberByTxHash('txhash-abc')).toBe(42);
+        c.invalidateCat(42);
+        expect(c.getCachedCat(42)).toBeUndefined();
+        expect(c.getCachedCatNumberByTxHash('txhash-abc')).toBeUndefined();
+    });
+});
+describe('CacheService.adjustCacheSizes (memory-pressure resize)', () => {
+    const MIN = 5300;
+    const DEFAULT = 10_000;
+    function withHeadroom(headroomBytes) {
+        const c = new cache_service_1.CacheService();
+        jest.spyOn(c, 'getMemoryInfo')
+            .mockReturnValue({ rss: 0, headroom: headroomBytes });
+        return c;
+    }
+    const maxSize = (c) => c.catsByNumber.getMaxSize();
+    const adjust = (c) => c.adjustCacheSizes();
+    it('shrinks toward half (clamped up to MIN) when headroom is below the danger threshold', () => {
+        const c = withHeadroom(10 * 1024 * 1024);
+        adjust(c);
+        expect(maxSize(c)).toBe(MIN);
+    });
+    it('grows by 2000 when headroom is above the growth threshold', () => {
+        const c = withHeadroom(200 * 1024 * 1024);
+        adjust(c);
+        expect(maxSize(c)).toBe(DEFAULT + 2000);
+    });
+    it('leaves capacity unchanged in the comfortable middle band', () => {
+        const c = withHeadroom(50 * 1024 * 1024);
+        adjust(c);
+        expect(maxSize(c)).toBe(DEFAULT);
+    });
+    it('never shrinks below MIN under sustained pressure (floor holds)', () => {
+        const c = withHeadroom(1 * 1024 * 1024);
+        adjust(c);
+        adjust(c);
+        expect(maxSize(c)).toBe(MIN);
+    });
+});
 //# sourceMappingURL=cache.service.spec.js.map

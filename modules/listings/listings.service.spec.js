@@ -294,4 +294,64 @@ describe('ListingsService.deleteByCatNumber', () => {
         expect(where).toHaveBeenCalled();
     });
 });
+function paginatedDrizzle(rows, total) {
+    const offset = jest.fn().mockResolvedValue(rows);
+    const rowsChain = {
+        from: jest.fn(() => rowsChain),
+        orderBy: jest.fn(() => rowsChain),
+        limit: jest.fn(() => rowsChain),
+        offset,
+    };
+    const countChain = { from: jest.fn().mockResolvedValue([{ total }]) };
+    return { db: { select: jest.fn((arg) => (arg === undefined ? rowsChain : countChain)) }, offset };
+}
+describe('ListingsService.findPaginated — happy path', () => {
+    it('maps rows to DTOs, passes through total, applies (page-1)*perPage offset', async () => {
+        const rows = [persistedRow({ id: 'p1', catNumber: 7 }), persistedRow({ id: 'p2', catNumber: 8 })];
+        const mock = paginatedDrizzle(rows, 33);
+        const service = new listings_service_1.ListingsService(mock, createOrdMock());
+        const res = await service.findPaginated(25, 2);
+        expect(res).toMatchObject({ total: 33, currentPage: 2, itemsPerPage: 25 });
+        expect(res.items).toHaveLength(2);
+        expect(res.items[0]).toMatchObject({ catNumber: 7 });
+        expect(mock.offset).toHaveBeenCalledWith(25);
+    });
+});
+describe('ListingsService.deleteByCatNumberIfOwnedBy (ownership-scoped delete)', () => {
+    it('returns false and does NOT delete when no row exists for the cat', async () => {
+        const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([]) });
+        const service = new listings_service_1.ListingsService(drizzle, createOrdMock());
+        expect(await service.deleteByCatNumberIfOwnedBy(42, ORD_ADDR)).toBe(false);
+        expect(drizzle.db.delete).not.toHaveBeenCalled();
+    });
+    it('returns false and does NOT delete when the row is owned by a different address', async () => {
+        const drizzle = createDrizzleMock({
+            limit: jest.fn().mockResolvedValue([{ id: 'row-x', ordinalsAddress: 'bc1p-a-different-owner' }]),
+        });
+        const service = new listings_service_1.ListingsService(drizzle, createOrdMock());
+        expect(await service.deleteByCatNumberIfOwnedBy(42, ORD_ADDR)).toBe(false);
+        expect(drizzle.db.delete).not.toHaveBeenCalled();
+    });
+    it('deletes by the row id and returns true when the caller owns the listing', async () => {
+        const where = jest.fn().mockResolvedValue(undefined);
+        const drizzle = createDrizzleMock({
+            limit: jest.fn().mockResolvedValue([{ id: 'row-1', ordinalsAddress: ORD_ADDR }]),
+            delete: jest.fn().mockReturnValue({ where }),
+        });
+        const service = new listings_service_1.ListingsService(drizzle, createOrdMock());
+        expect(await service.deleteByCatNumberIfOwnedBy(42, ORD_ADDR)).toBe(true);
+        expect(drizzle.db.delete).toHaveBeenCalled();
+        expect(where).toHaveBeenCalled();
+    });
+});
+describe('ListingsService.deleteByIdIfUnchanged (pruner delete)', () => {
+    it('runs the delete gated on both id AND signedAt', async () => {
+        const where = jest.fn().mockResolvedValue(undefined);
+        const drizzle = createDrizzleMock({ delete: jest.fn().mockReturnValue({ where }) });
+        const service = new listings_service_1.ListingsService(drizzle, createOrdMock());
+        await service.deleteByIdIfUnchanged('row-1', NOW_S);
+        expect(drizzle.db.delete).toHaveBeenCalled();
+        expect(where).toHaveBeenCalled();
+    });
+});
 //# sourceMappingURL=listings.service.spec.js.map
