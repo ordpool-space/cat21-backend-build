@@ -14,13 +14,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const constants_1 = require("@nestjs/common/constants");
-jest.mock('ordpool-sdk/core', () => ({
-    ...jest.requireActual('ordpool-sdk/core'),
+jest.mock('ordpool-sdk/cat21-validation', () => ({
+    ...jest.requireActual('ordpool-sdk/cat21-validation'),
     verifyBip322Signature: jest.fn(),
 }));
-const core_1 = require("ordpool-sdk/core");
+const cat21_session_1 = require("ordpool-sdk/cat21-session");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 const cat21_session_guard_1 = require("./cat21-session.guard");
-const mockVerify = core_1.verifyBip322Signature;
+const mockVerify = cat21_validation_1.verifyBip322Signature;
 const ADDR = 'bc1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c';
 function ctxWith(headers) {
     const req = { headers };
@@ -146,7 +147,7 @@ describe('Cat21SessionGuard', () => {
         expect(req.cat21SessionAddress).toBe(ADDR);
         expect(mockVerify).toHaveBeenCalledWith({
             address: ADDR,
-            message: (0, core_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso }),
+            message: (0, cat21_session_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso }),
             signatureBase64: 'base64signature',
         });
     });

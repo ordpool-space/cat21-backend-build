@@ -15,7 +15,7 @@ const common_1 = require("@nestjs/common");
 const base_1 = require("@scure/base");
 const btc = require("@scure/btc-signer");
 const drizzle_orm_1 = require("drizzle-orm");
-const core_1 = require("ordpool-sdk/core");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 const array_utils_1 = require("../shared/array-utils");
 const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
@@ -91,7 +91,7 @@ let BidsService = BidsService_1 = class BidsService {
             });
         }
         const sdkNetwork = (0, backend_network_1.toSdkNetwork)(dto.network);
-        const sdkResult = (0, core_1.validateCat21BuyOfferPsbt)({
+        const sdkResult = (0, cat21_validation_1.validateCat21BuyOfferPsbt)({
             psbt: psbtBytes,
             expectedSellerUtxo: { txid: dto.catTxid, vout: dto.catVout },
             floorPriceSats: 0,

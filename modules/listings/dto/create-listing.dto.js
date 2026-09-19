@@ -13,10 +13,10 @@ exports.CreateListingDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
-const core_1 = require("ordpool-sdk/core");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 class CreateListingDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { catNumber: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 } };
+        return { catNumber: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, askSats: { required: true, type: () => Number, minimum: 1, maximum: cat21_validation_1.MAX_ASK_SATS }, payTo: { required: true, type: () => String, maxLength: 128 }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, ordinalsAddress: { required: true, type: () => String, maxLength: 128 } };
     }
 }
 exports.CreateListingDto = CreateListingDto;
@@ -58,14 +58,14 @@ __decorate([
 ], CreateListingDto.prototype, "network", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: `Asking price in sats. Positive integer, capped at MAX_ASK_SATS (${core_1.MAX_ASK_SATS} = 21M BTC).`,
+        description: `Asking price in sats. Positive integer, capped at MAX_ASK_SATS (${cat21_validation_1.MAX_ASK_SATS} = 21M BTC).`,
         example: 21_000,
         minimum: 1,
-        maximum: core_1.MAX_ASK_SATS,
+        maximum: cat21_validation_1.MAX_ASK_SATS,
     }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
-    (0, class_validator_1.Max)(core_1.MAX_ASK_SATS),
+    (0, class_validator_1.Max)(cat21_validation_1.MAX_ASK_SATS),
     __metadata("design:type", Number)
 ], CreateListingDto.prototype, "askSats", void 0);
 __decorate([

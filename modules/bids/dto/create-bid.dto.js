@@ -13,10 +13,10 @@ exports.CreateBidDto = void 0;
 const openapi = require("@nestjs/swagger");
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
-const core_1 = require("ordpool-sdk/core");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 class CreateBidDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, headlineCatNumber: { required: true, type: () => Number, minimum: 0 }, bidSats: { required: true, type: () => Number, minimum: 1, maximum: core_1.MAX_ASK_SATS }, buyerOrdinalsAddress: { required: true, type: () => String, maxLength: 128 }, buyerPaymentAddress: { required: true, type: () => String, maxLength: 128 }, sellerPaymentAddress: { required: true, type: () => String, maxLength: 128 }, psbtBase64: { required: true, type: () => String, maxLength: 32768 } };
+        return { network: { required: true, enum: ["mainnet", "testnet3", "testnet4", "signet", "regtest"], enum: ['mainnet', 'testnet3', 'testnet4', 'signet', 'regtest'] }, catTxid: { required: true, type: () => String, pattern: "^[0-9a-f]{64}$" }, catVout: { required: true, type: () => Number, minimum: 0 }, cats: { required: true, type: () => [Number], minimum: 0, uniqueItems: true, minItems: 1 }, headlineCatNumber: { required: true, type: () => Number, minimum: 0 }, bidSats: { required: true, type: () => Number, minimum: 1, maximum: cat21_validation_1.MAX_ASK_SATS }, buyerOrdinalsAddress: { required: true, type: () => String, maxLength: 128 }, buyerPaymentAddress: { required: true, type: () => String, maxLength: 128 }, sellerPaymentAddress: { required: true, type: () => String, maxLength: 128 }, psbtBase64: { required: true, type: () => String, maxLength: 32768 } };
     }
 }
 exports.CreateBidDto = CreateBidDto;
@@ -82,11 +82,11 @@ __decorate([
             'and rejects on mismatch.',
         example: 21_000,
         minimum: 1,
-        maximum: core_1.MAX_ASK_SATS,
+        maximum: cat21_validation_1.MAX_ASK_SATS,
     }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
-    (0, class_validator_1.Max)(core_1.MAX_ASK_SATS),
+    (0, class_validator_1.Max)(cat21_validation_1.MAX_ASK_SATS),
     __metadata("design:type", Number)
 ], CreateBidDto.prototype, "bidSats", void 0);
 __decorate([

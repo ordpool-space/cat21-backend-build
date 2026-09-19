@@ -9,7 +9,8 @@ var Cat21SessionGuard_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Cat21SessionAddress = exports.Cat21SessionGuard = void 0;
 const common_1 = require("@nestjs/common");
-const core_1 = require("ordpool-sdk/core");
+const cat21_session_1 = require("ordpool-sdk/cat21-session");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 let Cat21SessionGuard = Cat21SessionGuard_1 = class Cat21SessionGuard {
     constructor() {
         this.logger = new common_1.Logger(Cat21SessionGuard_1.name);
@@ -25,15 +26,15 @@ let Cat21SessionGuard = Cat21SessionGuard_1 = class Cat21SessionGuard {
                 detail: 'Requires X-Cat21-Session-Address, X-Cat21-Session-Valid-Until, and X-Cat21-Session-Signature headers.',
             });
         }
-        const validity = (0, core_1.checkSessionValidity)(validUntilIso, Date.now());
+        const validity = (0, cat21_session_1.checkSessionValidity)(validUntilIso, Date.now());
         if (validity !== null) {
             throw new common_1.UnauthorizedException({
                 code: `session-${validity}`,
                 detail: `X-Cat21-Session-Valid-Until: ${validity} (${validUntilIso}).`,
             });
         }
-        const message = (0, core_1.buildCat21SessionMessage)({ address, validUntilIso });
-        const result = (0, core_1.verifyBip322Signature)({ address, message, signatureBase64 });
+        const message = (0, cat21_session_1.buildCat21SessionMessage)({ address, validUntilIso });
+        const result = (0, cat21_validation_1.verifyBip322Signature)({ address, message, signatureBase64 });
         if (!result.ok) {
             throw new common_1.UnauthorizedException({
                 code: `session-${result.reason}`,

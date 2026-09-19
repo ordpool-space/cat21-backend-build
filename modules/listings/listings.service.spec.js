@@ -2,16 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const listings_service_1 = require("./listings.service");
-jest.mock('ordpool-sdk/core', () => ({
-    Network: {
-        Mainnet: 'mainnet',
-        Testnet3: 'testnet3',
-        Testnet4: 'testnet4',
-        Signet: 'signet',
-        Regtest: 'regtest',
-    },
-    MAX_ASK_SATS: 21_000_000 * 100_000_000,
-}));
 const REAL_TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
 const OTHER_TXID = 'ff'.repeat(32);
 const ORD_ADDR = 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq7pkrz9';

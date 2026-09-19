@@ -6,18 +6,9 @@ let mockValidate;
 let mockFromPSBT;
 let mockOutScriptDecode;
 let mockAddressEncode;
-jest.mock('ordpool-sdk/core', () => ({
+jest.mock('ordpool-sdk/cat21-validation', () => ({
+    ...jest.requireActual('ordpool-sdk/cat21-validation'),
     validateCat21BuyOfferPsbt: (args) => mockValidate(args),
-    Network: {
-        Mainnet: 'mainnet',
-        Testnet3: 'testnet3',
-        Testnet4: 'testnet4',
-        Signet: 'signet',
-        Regtest: 'regtest',
-    },
-    MAX_ASK_SATS: 21_000_000 * 100_000_000,
-    CAT21_POSTAGE_SATS: 546,
-    toScureNetwork: () => ({ name: 'mock' }),
 }));
 jest.mock('@scure/btc-signer', () => ({
     Transaction: {

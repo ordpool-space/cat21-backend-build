@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const core_1 = require("ordpool-sdk/core");
+const network_1 = require("ordpool-sdk/network");
 const backend_network_1 = require("./backend-network");
 describe('backend-network', () => {
     describe('readBackendNetworkFromEnv', () => {
@@ -26,11 +26,11 @@ describe('backend-network', () => {
     });
     describe('toSdkNetwork', () => {
         it.each([
-            ['mainnet', core_1.Network.Mainnet],
-            ['testnet3', core_1.Network.Testnet3],
-            ['testnet4', core_1.Network.Testnet4],
-            ['signet', core_1.Network.Signet],
-            ['regtest', core_1.Network.Regtest],
+            ['mainnet', network_1.Network.Mainnet],
+            ['testnet3', network_1.Network.Testnet3],
+            ['testnet4', network_1.Network.Testnet4],
+            ['signet', network_1.Network.Signet],
+            ['regtest', network_1.Network.Regtest],
         ])('maps %s to the matching SDK Network enum', (name, expected) => {
             expect((0, backend_network_1.toSdkNetwork)(name)).toBe(expected);
         });
