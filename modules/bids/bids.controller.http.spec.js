@@ -8,7 +8,7 @@ const throttler_1 = require("@nestjs/throttler");
 const no_store_on_error_filter_1 = require("../shared/no-store-on-error.filter");
 const bids_controller_1 = require("./bids.controller");
 const bids_service_1 = require("./bids.service");
-describe('BidsController — error responses carry Cache-Control: no-store (integration)', () => {
+describe('BidsController — error responses carry Cache-Control: no-store over HTTP', () => {
     let app;
     let mockCreate;
     beforeEach(async () => {
@@ -107,4 +107,4 @@ describe('BidsController — error responses carry Cache-Control: no-store (inte
         expect(res.headers['cache-control']).toBe('no-store');
     });
 });
-//# sourceMappingURL=bids.controller.integration.spec.js.map
+//# sourceMappingURL=bids.controller.http.spec.js.map

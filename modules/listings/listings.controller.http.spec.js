@@ -9,7 +9,7 @@ const no_store_on_error_filter_1 = require("../shared/no-store-on-error.filter")
 const cat21_session_guard_1 = require("../shared/cat21-session.guard");
 const listings_controller_1 = require("./listings.controller");
 const listings_service_1 = require("./listings.service");
-describe('ListingsController — error responses carry Cache-Control: no-store (integration)', () => {
+describe('ListingsController — error responses carry Cache-Control: no-store over HTTP', () => {
     let app;
     let mockCreate;
     beforeEach(async () => {
@@ -94,7 +94,7 @@ describe('ListingsController — error responses carry Cache-Control: no-store (
         expect(res.headers['cache-control']).toBe('no-store');
     });
 });
-describe('GET /api/v1/listings/cat/:catNumber over HTTP (integration)', () => {
+describe('GET /api/v1/listings/cat/:catNumber over HTTP', () => {
     let app;
     let findByCatNumber;
     beforeEach(async () => {
@@ -143,4 +143,4 @@ describe('GET /api/v1/listings/cat/:catNumber over HTTP (integration)', () => {
         expect(res.headers['cache-control']).toBe('public, max-age=60, s-maxage=60');
     });
 });
-//# sourceMappingURL=listings.controller.integration.spec.js.map
+//# sourceMappingURL=listings.controller.http.spec.js.map
