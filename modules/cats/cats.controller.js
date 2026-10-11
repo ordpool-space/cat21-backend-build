@@ -341,7 +341,7 @@ __decorate([
             'closest to that rate within ±0.5 sat/vB. Used by the frontend color ' +
             'debug page to anchor each fee-rate row to a real minted cat.',
     }),
-    (0, swagger_1.ApiQuery)({ name: 'rates', description: 'Comma-separated list of fee rates (sat/vB), max 200 entries', example: '1,2,5,10,69,75,420,600' }),
+    (0, swagger_1.ApiQuery)({ name: 'rates', type: String, description: 'Comma-separated list of fee rates (sat/vB), max 200 entries', example: '1,2,5,10,69,75,420,600' }),
     (0, swagger_1.ApiOkResponse)({ type: cat_dto_1.FeeRateSampleDto, isArray: true }),
     (0, swagger_1.ApiBadRequestResponse)({ description: 'rates query is missing, malformed, or has more than 200 entries' }),
     __param(0, (0, common_1.Query)('rates')),

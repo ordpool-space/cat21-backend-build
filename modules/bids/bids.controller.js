@@ -147,7 +147,7 @@ __decorate([
     }),
     (0, swagger_1.ApiParam)({ name: 'catTxid', description: 'Cat UTXO txid.' }),
     (0, swagger_1.ApiParam)({ name: 'catVout', example: 0 }),
-    (0, swagger_1.ApiQuery)({ name: 'buyer', description: 'Buyer ordinals address (unique-key second half). Must match the session address.' }),
+    (0, swagger_1.ApiQuery)({ name: 'buyer', type: String, description: 'Buyer ordinals address (unique-key second half). Must match the session address.' }),
     (0, swagger_1.ApiNoContentResponse)({ description: 'Deleted (or already absent).' }),
     __param(0, (0, common_1.Param)('catTxid')),
     __param(1, (0, common_1.Param)('catVout', common_1.ParseIntPipe)),

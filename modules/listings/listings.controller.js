@@ -42,7 +42,7 @@ let ListingsController = class ListingsController {
         const listing = await this.listings.findByCatNumber(catNumber);
         if (!listing) {
             reply.header('Cache-Control', NO_STORE);
-            throw new common_1.NotFoundException(`No active listing for cat #${catNumber}`);
+            return null;
         }
         reply.header('Cache-Control', SINGLE_LISTING_CACHE_CONTROL);
         return listing;
@@ -95,9 +95,10 @@ __decorate([
     (0, common_1.Get)('cat/:catNumber'),
     (0, swagger_1.ApiOperation)({
         summary: 'Get the active listing for a cat',
-        description: 'Returns the active seller-signed listing for cat #catNumber, or 404 if the cat is ' +
-            'not currently listed. External clients can re-verify the returned signature offline ' +
-            'via ordpool-sdk `verifyListingSignature` — no trust in cat21-indexer required.',
+        description: 'Returns the active seller-signed listing for cat #catNumber, or null if the cat is ' +
+            'not currently listed. "Not listed" is a normal state, so it answers 200, not an error. ' +
+            'External clients can re-verify the returned signature offline via ordpool-sdk ' +
+            '`verifyListingSignature` — no trust in cat21-indexer required.',
     }),
     (0, swagger_1.ApiParam)({
         name: 'catNumber',
@@ -105,8 +106,11 @@ __decorate([
         example: 42,
         schema: { type: 'integer', minimum: 0 },
     }),
-    (0, swagger_1.ApiOkResponse)({ type: listing_dto_1.ListingDto }),
-    (0, swagger_1.ApiNotFoundResponse)({ description: 'No active listing for this cat.' }),
+    (0, swagger_1.ApiExtraModels)(listing_dto_1.ListingDto),
+    (0, swagger_1.ApiOkResponse)({
+        description: 'The active listing, or null when the cat is not listed.',
+        schema: { allOf: [{ $ref: (0, swagger_1.getSchemaPath)(listing_dto_1.ListingDto) }], nullable: true },
+    }),
     __param(0, (0, common_1.Param)('catNumber', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),

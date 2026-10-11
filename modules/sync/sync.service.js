@@ -21,6 +21,7 @@ Object.defineProperty(exports, "deriveCategory", { enumerable: true, get: functi
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
 const cats_1 = require("../shared/drizzle/schema/cats");
 const ord_client_service_1 = require("./ord-client.service");
+const sync_interval_1 = require("./sync-interval");
 const BATCH_SIZE = 50;
 let SyncService = SyncService_1 = class SyncService {
     constructor(drizzle, ordClient, cache) {
@@ -276,7 +277,7 @@ let SyncService = SyncService_1 = class SyncService {
 };
 exports.SyncService = SyncService;
 __decorate([
-    (0, schedule_1.Interval)(60_000),
+    (0, schedule_1.Interval)((0, sync_interval_1.readSyncIntervalMsFromEnv)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

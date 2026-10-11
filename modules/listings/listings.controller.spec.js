@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const common_1 = require("@nestjs/common");
 const listings_controller_1 = require("./listings.controller");
 describe('ListingsController (unit)', () => {
     function make(overrides = {}) {
@@ -23,16 +22,11 @@ describe('ListingsController (unit)', () => {
             expect(svc.findByCatNumber).toHaveBeenCalledWith(42);
             expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'public, max-age=60, s-maxage=60');
         });
-        it('throws NotFoundException with no-store (cache-poisoning guard) when there is no listing', async () => {
-            const { controller, reply } = make({ findByCatNumber: jest.fn().mockResolvedValue(null) });
-            let thrown;
-            try {
-                await controller.findByCatNumber(999, reply);
-            }
-            catch (e) {
-                thrown = e;
-            }
-            expect(thrown).toBeInstanceOf(common_1.NotFoundException);
+        it('returns null with no-store when the cat is not listed', async () => {
+            const { controller, svc, reply } = make({ findByCatNumber: jest.fn().mockResolvedValue(null) });
+            const out = await controller.findByCatNumber(999, reply);
+            expect(out).toBeNull();
+            expect(svc.findByCatNumber).toHaveBeenCalledWith(999);
             expect(reply.header).toHaveBeenCalledWith('Cache-Control', 'no-store');
         });
     });
