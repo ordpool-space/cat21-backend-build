@@ -14,15 +14,38 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const constants_1 = require("@nestjs/common/constants");
-jest.mock('ordpool-sdk/cat21-validation', () => ({
-    ...jest.requireActual('ordpool-sdk/cat21-validation'),
-    verifyBip322Signature: jest.fn(),
-}));
+const secp256k1_1 = require("@noble/curves/secp256k1");
+const base_1 = require("@scure/base");
+const btc = require("@scure/btc-signer");
 const cat21_session_1 = require("ordpool-sdk/cat21-session");
-const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 const cat21_session_guard_1 = require("./cat21-session.guard");
-const mockVerify = cat21_validation_1.verifyBip322Signature;
-const ADDR = 'bc1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c';
+const SESSION_KEY = base_1.hex.decode('07'.repeat(32));
+const sessionP2tr = btc.p2tr(secp256k1_1.schnorr.getPublicKey(SESSION_KEY), undefined, btc.NETWORK);
+const ADDR = sessionP2tr.address;
+const OTHER_ADDR = btc.p2tr(secp256k1_1.schnorr.getPublicKey(base_1.hex.decode('08'.repeat(32))), undefined, btc.NETWORK).address;
+function signSession(message) {
+    const messageHash = secp256k1_1.schnorr.utils.taggedHash('BIP0322-signed-message', new TextEncoder().encode(message));
+    const toSpend = new btc.Transaction({ version: 0, lockTime: 0, allowUnknownInputs: true, allowUnknownOutputs: true });
+    toSpend.addOutput({ script: sessionP2tr.script, amount: 0n });
+    toSpend.addInput({
+        txid: new Uint8Array(32),
+        index: 0xffffffff,
+        sequence: 0,
+        finalScriptSig: btc.Script.encode(['OP_0', messageHash]),
+    });
+    const toSign = new btc.Transaction({ version: 0, lockTime: 0, allowUnknownOutputs: true });
+    toSign.addInput({
+        txid: toSpend.id,
+        index: 0,
+        sequence: 0,
+        witnessUtxo: { script: sessionP2tr.script, amount: 0n },
+        tapInternalKey: secp256k1_1.schnorr.getPublicKey(SESSION_KEY),
+    });
+    toSign.addOutput({ script: btc.Script.encode(['RETURN']), amount: 0n });
+    toSign.signIdx(SESSION_KEY, 0);
+    const sig = toSign.getInput(0).tapKeySig;
+    return base_1.base64.encode(new Uint8Array([0x01, sig.length, ...sig]));
+}
 function ctxWith(headers) {
     const req = { headers };
     const ctx = { switchToHttp: () => ({ getRequest: () => req }) };
@@ -49,7 +72,6 @@ describe('Cat21SessionGuard', () => {
     let guard;
     beforeEach(() => {
         guard = new cat21_session_guard_1.Cat21SessionGuard();
-        mockVerify.mockReset();
     });
     it.each([
         ['all three missing', {}],
@@ -114,8 +136,7 @@ describe('Cat21SessionGuard', () => {
         }
         expect(thrown.getResponse()).toMatchObject({ code: 'session-session-too-far-in-future' });
     });
-    it('rejects when BIP-322 verification fails, surfacing the SDK reason + detail', () => {
-        mockVerify.mockReturnValue({ ok: false, reason: 'signature-does-not-verify', detail: 'schnorr verify failed' });
+    it('rejects a signature payload the verifier cannot read, surfacing the SDK reason + detail', () => {
         const { ctx, req } = ctxWith({
             'x-cat21-session-address': ADDR,
             'x-cat21-session-valid-until': futureIso(),
@@ -130,34 +151,66 @@ describe('Cat21SessionGuard', () => {
         }
         expect(thrown).toBeInstanceOf(common_1.UnauthorizedException);
         expect(thrown.getResponse()).toMatchObject({
-            code: 'session-signature-does-not-verify',
-            detail: 'schnorr verify failed',
+            code: 'session-malformed-signature',
+            detail: expect.stringContaining('base64 decode failed'),
         });
         expect(req.cat21SessionAddress).toBeUndefined();
     });
-    it('accepts a valid session, stashes the verified address, and verifies the rebuilt canonical message', () => {
-        mockVerify.mockReturnValue({ ok: true });
+    it('rejects a real signature over a different message (the canonical message is rebuilt, not trusted)', () => {
+        const validUntilIso = futureIso();
+        const signature = signSession((0, cat21_session_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso: futureIso(2 * 60 * 60 * 1000) }));
+        const { ctx, req } = ctxWith({
+            'x-cat21-session-address': ADDR,
+            'x-cat21-session-valid-until': validUntilIso,
+            'x-cat21-session-signature': signature,
+        });
+        let thrown;
+        try {
+            guard.canActivate(ctx);
+        }
+        catch (e) {
+            thrown = e;
+        }
+        expect(thrown.getResponse()).toMatchObject({
+            code: 'session-signature-does-not-verify',
+            detail: 'BIP-322 verify rejected: signature-does-not-verify',
+        });
+        expect(req.cat21SessionAddress).toBeUndefined();
+    });
+    it('rejects a real signature presented for another address', () => {
+        const validUntilIso = futureIso();
+        const signature = signSession((0, cat21_session_1.buildCat21SessionMessage)({ address: OTHER_ADDR, validUntilIso }));
+        const { ctx, req } = ctxWith({
+            'x-cat21-session-address': OTHER_ADDR,
+            'x-cat21-session-valid-until': validUntilIso,
+            'x-cat21-session-signature': signature,
+        });
+        let thrown;
+        try {
+            guard.canActivate(ctx);
+        }
+        catch (e) {
+            thrown = e;
+        }
+        expect(thrown.getResponse()).toMatchObject({ code: 'session-signature-does-not-verify' });
+        expect(req.cat21SessionAddress).toBeUndefined();
+    });
+    it('accepts a session signed over the canonical message and stashes the verified address', () => {
         const validUntilIso = futureIso();
         const { ctx, req } = ctxWith({
             'x-cat21-session-address': ADDR,
             'x-cat21-session-valid-until': validUntilIso,
-            'x-cat21-session-signature': 'base64signature',
+            'x-cat21-session-signature': signSession((0, cat21_session_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso })),
         });
         expect(guard.canActivate(ctx)).toBe(true);
         expect(req.cat21SessionAddress).toBe(ADDR);
-        expect(mockVerify).toHaveBeenCalledWith({
-            address: ADDR,
-            message: (0, cat21_session_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso }),
-            signatureBase64: 'base64signature',
-        });
     });
     it('reads a header delivered as a string array (fastify multi-value): takes the first element', () => {
-        mockVerify.mockReturnValue({ ok: true });
         const validUntilIso = futureIso();
         const { ctx, req } = ctxWith({
             'x-cat21-session-address': [ADDR, 'second-ignored'],
             'x-cat21-session-valid-until': validUntilIso,
-            'x-cat21-session-signature': 'sig',
+            'x-cat21-session-signature': signSession((0, cat21_session_1.buildCat21SessionMessage)({ address: ADDR, validUntilIso })),
         });
         expect(guard.canActivate(ctx)).toBe(true);
         expect(req.cat21SessionAddress).toBe(ADDR);

@@ -21,11 +21,6 @@ export interface CatCurrentLocation {
     vout: number;
     ordinalsAddress: string;
 }
-export interface OrdOutputDetail {
-    cats: (string | number)[];
-    inscriptions: string[];
-    runes: Record<string, unknown>;
-}
 export declare class OrdClientService {
     private readonly baseUrl;
     constructor(configService: ConfigService);

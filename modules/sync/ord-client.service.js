@@ -13,6 +13,7 @@ exports.OrdClientService = void 0;
 exports.parseSatpoint = parseSatpoint;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 const FETCH_TIMEOUT_MS = 30_000;
 let OrdClientService = class OrdClientService {
     constructor(configService) {
@@ -45,19 +46,8 @@ let OrdClientService = class OrdClientService {
         };
     }
     async getCatsAtOutput(txid, vout) {
-        const out = await this.fetchJson(`${this.baseUrl}/output/${txid}:${vout}`, true);
-        if (!out)
-            return null;
-        if (!Array.isArray(out.cats))
-            return [];
-        const numbers = await Promise.all(out.cats.map(async (entry) => {
-            if (typeof entry === 'number')
-                return Number.isInteger(entry) && entry >= 0 ? entry : null;
-            const cat = await this.getCat(entry);
-            return cat?.number ?? null;
-        }));
-        const resolved = numbers.filter((n) => n !== null && n >= 0);
-        return Array.from(new Set(resolved)).sort((a, b) => a - b);
+        const reader = (0, cat21_validation_1.cat21OrdFetchReader)(this.baseUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        return (0, cat21_validation_1.getCatsAtOutput)(reader, txid, vout);
     }
     async fetchJson(url, allow404 = false) {
         const res = await fetch(url, {

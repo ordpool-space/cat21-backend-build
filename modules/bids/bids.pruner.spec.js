@@ -1,17 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const bids_pruner_1 = require("./bids.pruner");
-let mockFromPSBT;
-jest.mock('@scure/btc-signer', () => ({
-    Transaction: {
-        fromPSBT: (...args) => mockFromPSBT(...args),
-    },
-}));
+const buy_offer_psbt_test_helper_1 = require("./buy-offer-psbt.test-helper");
 const REAL_TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
 const BUYER_A = 'bc1p-buyer-a';
 const BUYER_B = 'bc1p-buyer-b';
 const FUND_TXID_LIVE = 'aa'.repeat(32);
 const FUND_TXID_SPENT = 'bb'.repeat(32);
+let rowPsbt = '';
 const row = (over = {}) => ({
     id: 'uuid-x',
     network: 'mainnet',
@@ -23,7 +19,7 @@ const row = (over = {}) => ({
     buyerOrdinalsAddress: BUYER_A,
     buyerPaymentAddress: 'bc1q-pay',
     sellerPaymentAddress: 'bc1q-seller-pay',
-    psbtBase64: 'AAECAw==',
+    psbtBase64: rowPsbt,
     createdAt: new Date(),
     ...over,
 });
@@ -35,16 +31,10 @@ function drizzleWithRows(rows) {
     };
 }
 function stubPsbt(buyerFundingTxids) {
-    mockFromPSBT.mockReturnValue({
-        inputsLength: buyerFundingTxids.length + 1,
-        getInput(i) {
-            if (i === 0)
-                return { txid: new Uint8Array(32), index: 0 };
-            const txid = buyerFundingTxids[i - 1];
-            const bytes = new Uint8Array(txid.match(/../g).map((h) => parseInt(h, 16)));
-            return { txid: bytes, index: 0 };
-        },
-    });
+    rowPsbt = (0, buy_offer_psbt_test_helper_1.buildBuyOfferPsbt)({
+        sellerUtxo: { txid: REAL_TXID, vout: 0, value: 546 },
+        buyerFunding: buyerFundingTxids.map((txid, i) => ({ txid, vout: i, value: 50_000 })),
+    }).base64;
 }
 function createElectrsMock(status = {}) {
     const resolve = (txid) => status[txid] ?? 'unspent';
@@ -59,7 +49,6 @@ function createElectrsMock(status = {}) {
 }
 describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
     beforeEach(() => {
-        mockFromPSBT = jest.fn();
         stubPsbt([FUND_TXID_LIVE]);
     });
     afterEach(() => {
@@ -118,9 +107,6 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
     });
 });
 describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
-    beforeEach(() => {
-        mockFromPSBT = jest.fn();
-    });
     afterEach(() => {
         jest.restoreAllMocks();
     });
@@ -153,10 +139,10 @@ describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();
         expect(bidsSvc.deleteByOutpointAndBuyer).not.toHaveBeenCalled();
+        expect(electrs.getOutpointStatus.mock.calls).toEqual([[FUND_TXID_LIVE, 0], [FUND_TXID_LIVE, 1]]);
     });
     it('drops a bid whose PSBT no longer parses (corrupt row)', async () => {
-        mockFromPSBT.mockImplementation(() => { throw new Error('PSBT magic bytes wrong'); });
-        const drizzle = drizzleWithRows([row()]);
+        const drizzle = drizzleWithRows([row({ psbtBase64: 'AAECAw==' })]);
         const ord = { getCatsAtOutput: jest.fn().mockResolvedValue([42]) };
         const electrs = createElectrsMock();
         const bidsSvc = { deleteByOutpointAndBuyer: jest.fn().mockResolvedValue(undefined) };
@@ -177,7 +163,6 @@ describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
 });
 describe('BidsPruner.runPrune — batching + re-entrancy', () => {
     beforeEach(() => {
-        mockFromPSBT = jest.fn();
         stubPsbt([FUND_TXID_LIVE]);
     });
     afterEach(() => {
