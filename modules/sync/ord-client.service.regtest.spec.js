@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const stack_ports_1 = require("../../../node_modules/ordpool-sdk/dist-e2e/stack-ports");
 const ord_client_service_1 = require("./ord-client.service");
-const ORD_API_URL = process.env.ORD_API_URL ?? 'http://127.0.0.1:8080';
+const ORD_API_URL = process.env.ORD_API_URL ?? (0, stack_ports_1.stackUrl)('ord');
 function realService() {
     return new ord_client_service_1.OrdClientService({ getOrThrow: () => ORD_API_URL });
 }

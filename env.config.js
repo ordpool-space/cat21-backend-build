@@ -19,6 +19,7 @@ class EnvironmentVariables {
         this.PORT = 3333;
         this.HOST = '0.0.0.0';
         this.ORD_API_URL = 'https://ord.cat21.space';
+        this.CORS_EXTRA_ORIGINS = '';
         this.ELECTRS_API_URL = 'https://api.ordpool.space/api';
         this.BACKEND_NETWORK = 'mainnet';
     }
@@ -49,6 +50,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], EnvironmentVariables.prototype, "ORD_API_URL", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EnvironmentVariables.prototype, "CORS_EXTRA_ORIGINS", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

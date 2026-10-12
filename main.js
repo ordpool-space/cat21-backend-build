@@ -7,6 +7,7 @@ const helmet_1 = require("@fastify/helmet");
 const config_1 = require("@nestjs/config");
 const sharp = require("sharp");
 const app_module_1 = require("./app.module");
+const cors_origins_1 = require("./cors-origins");
 const no_store_on_error_filter_1 = require("./modules/shared/no-store-on-error.filter");
 const swagger_1 = require("./swagger");
 sharp.cache(false);
@@ -17,12 +18,8 @@ async function bootstrap() {
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         contentSecurityPolicy: false,
     });
-    const allowedOrigins = [
-        'https://cat21.space',
-        'https://ordpool.space',
-        'http://localhost:4200',
-        'http://localhost:4221',
-    ];
+    const cfg = app.get(config_1.ConfigService);
+    const allowedOrigins = (0, cors_origins_1.corsAllowedOrigins)(cfg.get('CORS_EXTRA_ORIGINS'));
     app.enableCors({
         origin: (origin, cb) => {
             if (!origin)
@@ -47,7 +44,6 @@ async function bootstrap() {
     }));
     app.useGlobalFilters(new no_store_on_error_filter_1.NoStoreOnErrorFilter(app.get(core_1.HttpAdapterHost)));
     (0, swagger_1.setupSwagger)(app);
-    const cfg = app.get(config_1.ConfigService);
     const port = cfg.get('PORT', 3333);
     const host = cfg.get('HOST', '0.0.0.0');
     await app.listen(port, host);

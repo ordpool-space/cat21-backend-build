@@ -4,6 +4,7 @@ export declare class EnvironmentVariables {
     HOST: string;
     DATABASE_URL: string;
     ORD_API_URL: string;
+    CORS_EXTRA_ORIGINS: string;
     ELECTRS_API_URL: string;
     BACKEND_NETWORK: 'mainnet' | 'testnet3' | 'testnet4' | 'signet' | 'regtest';
 }
