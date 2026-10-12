@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const stack_ports_1 = require("../../../node_modules/ordpool-sdk/dist-e2e/stack-ports");
+const stack_1 = require("ordpool-sdk/e2e/stack");
 const electrs_client_service_1 = require("./electrs-client.service");
-const ELECTRS_API_URL = process.env.ELECTRS_API_URL ?? (0, stack_ports_1.stackUrl)('electrs');
+const ELECTRS_API_URL = process.env.ELECTRS_API_URL ?? (0, stack_1.stackUrl)('electrs');
 function realService() {
     return new electrs_client_service_1.ElectrsClientService({ getOrThrow: () => ELECTRS_API_URL });
 }
