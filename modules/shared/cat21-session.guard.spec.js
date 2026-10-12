@@ -14,37 +14,15 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const constants_1 = require("@nestjs/common/constants");
-const secp256k1_1 = require("@noble/curves/secp256k1");
 const base_1 = require("@scure/base");
-const btc = require("@scure/btc-signer");
 const cat21_session_1 = require("ordpool-sdk/cat21-session");
+const testing_1 = require("ordpool-sdk/testing");
 const cat21_session_guard_1 = require("./cat21-session.guard");
 const SESSION_KEY = base_1.hex.decode('07'.repeat(32));
-const sessionP2tr = btc.p2tr(secp256k1_1.schnorr.getPublicKey(SESSION_KEY), undefined, btc.NETWORK);
-const ADDR = sessionP2tr.address;
-const OTHER_ADDR = btc.p2tr(secp256k1_1.schnorr.getPublicKey(base_1.hex.decode('08'.repeat(32))), undefined, btc.NETWORK).address;
+const ADDR = (0, testing_1.testTaprootAddress)(SESSION_KEY);
+const OTHER_ADDR = (0, testing_1.testTaprootAddress)(base_1.hex.decode('08'.repeat(32)));
 function signSession(message) {
-    const messageHash = secp256k1_1.schnorr.utils.taggedHash('BIP0322-signed-message', new TextEncoder().encode(message));
-    const toSpend = new btc.Transaction({ version: 0, lockTime: 0, allowUnknownInputs: true, allowUnknownOutputs: true });
-    toSpend.addOutput({ script: sessionP2tr.script, amount: 0n });
-    toSpend.addInput({
-        txid: new Uint8Array(32),
-        index: 0xffffffff,
-        sequence: 0,
-        finalScriptSig: btc.Script.encode(['OP_0', messageHash]),
-    });
-    const toSign = new btc.Transaction({ version: 0, lockTime: 0, allowUnknownOutputs: true });
-    toSign.addInput({
-        txid: toSpend.id,
-        index: 0,
-        sequence: 0,
-        witnessUtxo: { script: sessionP2tr.script, amount: 0n },
-        tapInternalKey: secp256k1_1.schnorr.getPublicKey(SESSION_KEY),
-    });
-    toSign.addOutput({ script: btc.Script.encode(['RETURN']), amount: 0n });
-    toSign.signIdx(SESSION_KEY, 0);
-    const sig = toSign.getInput(0).tapKeySig;
-    return base_1.base64.encode(new Uint8Array([0x01, sig.length, ...sig]));
+    return (0, testing_1.signTestBip322Message)({ privateKey: SESSION_KEY, message });
 }
 function ctxWith(headers) {
     const req = { headers };

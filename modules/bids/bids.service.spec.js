@@ -2,17 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const btc = require("@scure/btc-signer");
+const testing_1 = require("ordpool-sdk/testing");
 const bids_service_1 = require("./bids.service");
-const buy_offer_psbt_test_helper_1 = require("./buy-offer-psbt.test-helper");
 const REAL_TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
 const OTHER_TXID = 'ff'.repeat(32);
-const BUYER_ORD_ADDR = buy_offer_psbt_test_helper_1.BUYER_ORDINALS_ADDRESS;
-const BUYER_PAY_ADDR = buy_offer_psbt_test_helper_1.BUYER_PAYMENT_ADDRESS;
-const SELLER_PAY_ADDR = buy_offer_psbt_test_helper_1.SELLER_PAYMENT_ADDRESS;
+const BUYER_ORD_ADDR = testing_1.TEST_OFFER_BUYER_ORDINALS_ADDRESS;
+const BUYER_PAY_ADDR = testing_1.TEST_OFFER_BUYER_PAYMENT_ADDRESS;
+const SELLER_PAY_ADDR = testing_1.TEST_OFFER_SELLER_PAYMENT_ADDRESS;
 const CAT_VALUE_SATS = 546;
 const BID_SATS = 21_000;
 const NOT_A_PSBT = 'AAECAw==';
-const VALID_PSBT = (0, buy_offer_psbt_test_helper_1.buildBuyOfferPsbt)({
+const VALID_PSBT = (0, testing_1.buildSignedTestBuyOffer)({
     sellerUtxo: { txid: REAL_TXID, vout: 0, value: CAT_VALUE_SATS },
     priceSats: BID_SATS,
 }).base64;
@@ -45,7 +45,7 @@ const persistedRow = (over = {}) => ({
     ...over,
 });
 function psbtWith(opts) {
-    return (0, buy_offer_psbt_test_helper_1.buildBuyOfferPsbt)({
+    return (0, testing_1.buildSignedTestBuyOffer)({
         sellerUtxo: { txid: REAL_TXID, vout: 0, value: CAT_VALUE_SATS },
         priceSats: BID_SATS,
         ...opts,
@@ -162,9 +162,9 @@ describe('BidsService.create — PSBT decode + shape', () => {
 describe('BidsService.create: SDK validator wiring (every DTO field reaches it)', () => {
     it.each([
         ['expectedSellerUtxo', 'missing-seller-input', () => validDto({ psbtBase64: psbtWith({ sellerUtxo: { txid: OTHER_TXID, vout: 0, value: CAT_VALUE_SATS } }) })],
-        ['expectedSellerPaymentAddress', 'payment-output-wrong-address', () => validDto({ sellerPaymentAddress: buy_offer_psbt_test_helper_1.STRANGER_ADDRESS })],
-        ['expectedBuyerReceiveAddress', 'cat-output-wrong-address', () => validDto({ buyerOrdinalsAddress: buy_offer_psbt_test_helper_1.STRANGER_ADDRESS })],
-        ['expectedBuyerChangeAddress', 'change-output-wrong-address', () => validDto({ buyerPaymentAddress: buy_offer_psbt_test_helper_1.STRANGER_ADDRESS })],
+        ['expectedSellerPaymentAddress', 'payment-output-wrong-address', () => validDto({ sellerPaymentAddress: testing_1.TEST_OFFER_STRANGER_ADDRESS })],
+        ['expectedBuyerReceiveAddress', 'cat-output-wrong-address', () => validDto({ buyerOrdinalsAddress: testing_1.TEST_OFFER_STRANGER_ADDRESS })],
+        ['expectedBuyerChangeAddress', 'change-output-wrong-address', () => validDto({ buyerPaymentAddress: testing_1.TEST_OFFER_STRANGER_ADDRESS })],
         ['expectedExactPrice', 'wrong-price-exact', () => validDto({ bidSats: BID_SATS + 1 })],
     ])('%s: a mismatch surfaces as psbt-%s', async (_field, reason, dto) => {
         const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock());
@@ -204,15 +204,15 @@ describe('BidsService.create: electrs + ord', () => {
         const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow()]) });
         const psbt = psbtWith({
             buyerFunding: [
-                { txid: (0, buy_offer_psbt_test_helper_1.fundingTxid)(0xaa), vout: 1, value: 60_000 },
-                { txid: (0, buy_offer_psbt_test_helper_1.fundingTxid)(0xbb), vout: 3, value: 40_000 },
+                { txid: (0, testing_1.testFundingTxid)(0xaa), vout: 1, value: 60_000 },
+                { txid: (0, testing_1.testFundingTxid)(0xbb), vout: 3, value: 40_000 },
             ],
         });
         const service = new bids_service_1.BidsService(drizzle, createOrdMock(), electrs);
         await service.create(validDto({ psbtBase64: psbt }));
         expect(electrs.getOutpointStatus.mock.calls).toEqual([
-            [(0, buy_offer_psbt_test_helper_1.fundingTxid)(0xaa), 1],
-            [(0, buy_offer_psbt_test_helper_1.fundingTxid)(0xbb), 3],
+            [(0, testing_1.testFundingTxid)(0xaa), 1],
+            [(0, testing_1.testFundingTxid)(0xbb), 3],
         ]);
     });
     it('rejects ord-lookup-failed when the /output call throws', async () => {

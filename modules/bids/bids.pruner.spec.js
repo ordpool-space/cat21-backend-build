@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const testing_1 = require("ordpool-sdk/testing");
 const bids_pruner_1 = require("./bids.pruner");
-const buy_offer_psbt_test_helper_1 = require("./buy-offer-psbt.test-helper");
 const REAL_TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
 const BUYER_A = 'bc1p-buyer-a';
 const BUYER_B = 'bc1p-buyer-b';
@@ -31,7 +31,7 @@ function drizzleWithRows(rows) {
     };
 }
 function stubPsbt(buyerFundingTxids) {
-    rowPsbt = (0, buy_offer_psbt_test_helper_1.buildBuyOfferPsbt)({
+    rowPsbt = (0, testing_1.buildSignedTestBuyOffer)({
         sellerUtxo: { txid: REAL_TXID, vout: 0, value: 546 },
         buyerFunding: buyerFundingTxids.map((txid, i) => ({ txid, vout: i, value: 50_000 })),
     }).base64;
