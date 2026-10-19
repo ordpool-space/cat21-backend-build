@@ -5,9 +5,18 @@ const core_1 = require("@nestjs/core");
 const platform_fastify_1 = require("@nestjs/platform-fastify");
 const testing_1 = require("@nestjs/testing");
 const throttler_1 = require("@nestjs/throttler");
+const cat21_session_guard_1 = require("../shared/cat21-session.guard");
 const no_store_on_error_filter_1 = require("../shared/no-store-on-error.filter");
 const bids_controller_1 = require("./bids.controller");
 const bids_service_1 = require("./bids.service");
+const BODY_BUYER_ORDINALS = 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxq7pkrz9';
+const stubSessionGuard = {
+    canActivate: (ctx) => {
+        const req = ctx.switchToHttp().getRequest();
+        req.cat21SessionAddress = req.headers['x-test-session-address'] ?? BODY_BUYER_ORDINALS;
+        return true;
+    },
+};
 describe('BidsController — error responses carry Cache-Control: no-store over HTTP', () => {
     let app;
     let mockCreate;
@@ -29,7 +38,10 @@ describe('BidsController — error responses carry Cache-Control: no-store over 
                     },
                 },
             ],
-        }).compile();
+        })
+            .overrideGuard(cat21_session_guard_1.Cat21SessionGuard)
+            .useValue(stubSessionGuard)
+            .compile();
         app = module.createNestApplication(new platform_fastify_1.FastifyAdapter({ logger: false }));
         app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
         app.useGlobalFilters(new no_store_on_error_filter_1.NoStoreOnErrorFilter(app.get(core_1.HttpAdapterHost)));
@@ -71,6 +83,18 @@ describe('BidsController — error responses carry Cache-Control: no-store over 
         expect(res.statusCode).toBe(400);
         expect(res.headers['cache-control']).toBe('no-store');
         expect(JSON.parse(res.body)).toMatchObject({ code: 'cats-bundle-drift' });
+    });
+    it('403 when the session address does not match buyerOrdinalsAddress carries no-store', async () => {
+        const res = await app.inject({
+            method: 'POST',
+            url: '/api/v1/bids',
+            headers: { 'x-test-session-address': 'bc1qz69ej270c3q9qvgt822t6pm3zdksk2x35j2jlm' },
+            payload: validDtoBody(),
+        });
+        expect(res.statusCode).toBe(403);
+        expect(res.headers['cache-control']).toBe('no-store');
+        expect(JSON.parse(res.body)).toMatchObject({ code: 'session-address-mismatch' });
+        expect(mockCreate).not.toHaveBeenCalled();
     });
     it('429 from ThrottlerGuard (6th request within window) carries no-store', async () => {
         mockCreate.mockResolvedValue({

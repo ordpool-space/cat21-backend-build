@@ -107,6 +107,37 @@ let BidsService = BidsService_1 = class BidsService {
                 detail: sdkResult.detail ?? `SDK validator rejected: ${sdkResult.reason}`,
             });
         }
+        const prevouts = new Map();
+        for (let i = 0; i < tx.inputsLength; i++) {
+            const inp = tx.getInput(i);
+            if (!inp.txid)
+                continue;
+            const inpTxid = base_1.hex.encode(inp.txid);
+            const inpVout = inp.index ?? 0;
+            const pv = await this.electrsClient.getPrevout(inpTxid, inpVout);
+            if (pv === 'not-found') {
+                throw new common_1.BadRequestException({
+                    code: 'psbt-buyer-input-unspendable',
+                    detail: `PSBT input ${i} (${inpTxid}:${inpVout}) is unspendable — the txid is unknown to ` +
+                        'electrs (never broadcast / orphaned) or the vout is out of range.',
+                });
+            }
+            if (pv === 'unknown') {
+                throw new common_1.BadRequestException({
+                    code: 'prevout-fetch-failed',
+                    detail: `Could not read input ${i} (${inpTxid}:${inpVout}) from the chain to verify the ` +
+                        'bid signatures. Transient; retry in a moment.',
+                });
+            }
+            prevouts.set(`${inpTxid}:${inpVout}`, pv);
+        }
+        const sigResult = (0, cat21_validation_1.verifyOfferInputSignatures)(psbtBytes, prevouts);
+        if (!sigResult.ok) {
+            throw new common_1.BadRequestException({
+                code: `psbt-${sigResult.reason}`,
+                detail: `input ${sigResult.inputIndex}: ${sigResult.detail}`,
+            });
+        }
         for (let i = 1; i < tx.inputsLength; i++) {
             const inp = tx.getInput(i);
             if (!inp.txid)

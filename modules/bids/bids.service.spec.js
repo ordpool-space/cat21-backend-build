@@ -12,10 +12,11 @@ const SELLER_PAY_ADDR = testing_1.TEST_OFFER_SELLER_PAYMENT_ADDRESS;
 const CAT_VALUE_SATS = 546;
 const BID_SATS = 21_000;
 const NOT_A_PSBT = 'AAECAw==';
-const VALID_PSBT = (0, testing_1.buildSignedTestBuyOffer)({
+const DEFAULT_OFFER = (0, testing_1.buildSignedTestBuyOffer)({
     sellerUtxo: { txid: REAL_TXID, vout: 0, value: CAT_VALUE_SATS },
     priceSats: BID_SATS,
-}).base64;
+});
+const VALID_PSBT = DEFAULT_OFFER.base64;
 const validDto = (over = {}) => ({
     network: 'mainnet',
     catTxid: REAL_TXID,
@@ -79,9 +80,11 @@ function createOrdMock(opts = {}) {
 }
 function createElectrsMock(opts = {}) {
     const status = opts.status ?? 'unspent';
+    const prevouts = opts.prevouts ?? DEFAULT_OFFER.prevouts;
     return {
         getOutpointStatus: jest.fn().mockResolvedValue(status),
         isOutpointSpent: jest.fn().mockResolvedValue(status === 'spent'),
+        getPrevout: jest.fn().mockImplementation((txid, vout) => Promise.resolve(prevouts.get(`${txid}:${vout}`) ?? 'not-found')),
     };
 }
 describe('BidsService.create — pre-checks (cheap fails first)', () => {
@@ -200,20 +203,54 @@ describe('BidsService.create: SDK validator wiring (every DTO field reaches it)'
 });
 describe('BidsService.create: electrs + ord', () => {
     it('checks every buyer funding input against electrs, by its real outpoint', async () => {
-        const electrs = createElectrsMock();
-        const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow()]) });
-        const psbt = psbtWith({
+        const offer = (0, testing_1.buildSignedTestBuyOffer)({
+            sellerUtxo: { txid: REAL_TXID, vout: 0, value: CAT_VALUE_SATS },
+            priceSats: BID_SATS,
             buyerFunding: [
                 { txid: (0, testing_1.testFundingTxid)(0xaa), vout: 1, value: 60_000 },
                 { txid: (0, testing_1.testFundingTxid)(0xbb), vout: 3, value: 40_000 },
             ],
         });
+        const electrs = createElectrsMock({ prevouts: offer.prevouts });
+        const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow()]) });
         const service = new bids_service_1.BidsService(drizzle, createOrdMock(), electrs);
-        await service.create(validDto({ psbtBase64: psbt }));
+        await service.create(validDto({ psbtBase64: offer.base64 }));
         expect(electrs.getOutpointStatus.mock.calls).toEqual([
             [(0, testing_1.testFundingTxid)(0xaa), 1],
             [(0, testing_1.testFundingTxid)(0xbb), 3],
         ]);
+    });
+    it('rejects psbt-prevout-amount-mismatch when electrs reports a different input value than the PSBT claims', async () => {
+        const tampered = new Map(DEFAULT_OFFER.prevouts);
+        const fundingKey = `${(0, testing_1.testFundingTxid)(0xaa)}:1`;
+        const real = DEFAULT_OFFER.prevouts.get(fundingKey);
+        tampered.set(fundingKey, { script: real.script, amountSats: real.amountSats + 1 });
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), createElectrsMock({ prevouts: tampered }));
+        await expect(service.create(validDto())).rejects.toMatchObject({
+            response: { code: 'psbt-prevout-amount-mismatch' },
+        });
+    });
+    it('rejects psbt-buyer-input-unspendable when a buyer input has no chain prevout (phantom)', async () => {
+        const electrs = {
+            getOutpointStatus: jest.fn().mockResolvedValue('unspent'),
+            isOutpointSpent: jest.fn().mockResolvedValue(false),
+            getPrevout: jest.fn().mockResolvedValue('not-found'),
+        };
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), electrs);
+        await expect(service.create(validDto())).rejects.toMatchObject({
+            response: { code: 'psbt-buyer-input-unspendable' },
+        });
+    });
+    it('rejects prevout-fetch-failed (fail closed) when a prevout cannot be read from electrs', async () => {
+        const electrs = {
+            getOutpointStatus: jest.fn().mockResolvedValue('unspent'),
+            isOutpointSpent: jest.fn().mockResolvedValue(false),
+            getPrevout: jest.fn().mockResolvedValue('unknown'),
+        };
+        const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock(), electrs);
+        await expect(service.create(validDto())).rejects.toMatchObject({
+            response: { code: 'prevout-fetch-failed' },
+        });
     });
     it('rejects ord-lookup-failed when the /output call throws', async () => {
         const service = new bids_service_1.BidsService(createDrizzleMock(), createOrdMock({ throwOnCatsAtOutput: true }), createElectrsMock());
@@ -273,9 +310,12 @@ describe('BidsService.create — happy path + upsert', () => {
     it('accepts a cat that sits on a non-zero output, validating against that outpoint', async () => {
         const ord = createOrdMock();
         const drizzle = createDrizzleMock({ limit: jest.fn().mockResolvedValue([persistedRow({ catVout: 1 })]) });
-        const service = new bids_service_1.BidsService(drizzle, ord, createElectrsMock());
-        const psbt = psbtWith({ sellerUtxo: { txid: REAL_TXID, vout: 1, value: CAT_VALUE_SATS } });
-        await expect(service.create(validDto({ catVout: 1, psbtBase64: psbt }))).resolves.toMatchObject({ catVout: 1 });
+        const offer = (0, testing_1.buildSignedTestBuyOffer)({
+            sellerUtxo: { txid: REAL_TXID, vout: 1, value: CAT_VALUE_SATS },
+            priceSats: BID_SATS,
+        });
+        const service = new bids_service_1.BidsService(drizzle, ord, createElectrsMock({ prevouts: offer.prevouts }));
+        await expect(service.create(validDto({ catVout: 1, psbtBase64: offer.base64 }))).resolves.toMatchObject({ catVout: 1 });
         expect(ord.getCatsAtOutput).toHaveBeenCalledWith(REAL_TXID, 1);
     });
     it('read-back returns the multi-cat bundle exactly as persisted', async () => {

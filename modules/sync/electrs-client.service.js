@@ -85,10 +85,65 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
     async isOutpointSpent(txid, vout) {
         return (await this.getOutpointStatus(txid, vout)) === 'spent';
     }
+    async getPrevout(txid, vout) {
+        let res;
+        try {
+            res = await fetch(`${this.baseUrl}/tx/${txid}`, {
+                headers: { Accept: 'application/json' },
+                signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+            });
+        }
+        catch (err) {
+            this.logger.warn(`electrs /tx fetch failed for ${txid}: ${err instanceof Error ? err.message : err}`);
+            return 'unknown';
+        }
+        if (res.status === 404)
+            return 'not-found';
+        if (!res.ok) {
+            this.logger.warn(`electrs /tx returned ${res.status} for ${txid}`);
+            return 'unknown';
+        }
+        let body;
+        try {
+            body = await res.json();
+        }
+        catch (err) {
+            this.logger.warn(`electrs /tx malformed JSON for ${txid}: ${err instanceof Error ? err.message : err}`);
+            return 'unknown';
+        }
+        const vouts = body.vout;
+        if (!Array.isArray(vouts) || vout < 0 || vout >= vouts.length)
+            return 'not-found';
+        const out = vouts[vout];
+        if (typeof out?.scriptpubkey !== 'string' || typeof out?.value !== 'number') {
+            this.logger.warn(`electrs /tx vout ${vout} unexpected shape for ${txid}`);
+            return 'unknown';
+        }
+        let script;
+        try {
+            script = hexToBytes(out.scriptpubkey);
+        }
+        catch {
+            return 'unknown';
+        }
+        return { script, amountSats: out.value };
+    }
 };
 exports.ElectrsClientService = ElectrsClientService;
 exports.ElectrsClientService = ElectrsClientService = ElectrsClientService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], ElectrsClientService);
+function hexToBytes(h) {
+    if (h.length % 2 !== 0)
+        throw new Error('odd-length hex');
+    const out = new Uint8Array(h.length / 2);
+    for (let i = 0; i < out.length; i++) {
+        const byte = Number.parseInt(h.slice(i * 2, i * 2 + 2), 16);
+        if (Number.isNaN(byte))
+            throw new Error('invalid hex');
+        out[i] = byte;
+    }
+    return out;
+}
 //# sourceMappingURL=electrs-client.service.js.map

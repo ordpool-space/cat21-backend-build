@@ -27,7 +27,14 @@ let BidsController = class BidsController {
     constructor(bids) {
         this.bids = bids;
     }
-    async create(dto, reply) {
+    async create(dto, sessionAddress, reply) {
+        if (sessionAddress !== dto.buyerOrdinalsAddress) {
+            reply.header('Cache-Control', NO_STORE);
+            throw new common_1.ForbiddenException({
+                code: 'session-address-mismatch',
+                detail: 'Session token proves control of a different address than buyerOrdinalsAddress.',
+            });
+        }
         try {
             const created = await this.bids.create(dto);
             reply.header('Cache-Control', NO_STORE);
@@ -62,11 +69,13 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(201),
     (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60_000 } }),
-    (0, common_1.UseGuards)(throttler_1.ThrottlerGuard),
+    (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
     (0, swagger_1.ApiOperation)({
         summary: 'Post (or overwrite) a bid on a cat UTXO',
-        description: "Publishes a buyer's half-signed PSBT to the marketplace. The PSBT itself IS the auth — " +
-            "the buyer's SIGHASH_ALL signatures on inputs 1..N commit their funds to exact outputs. " +
+        description: "Publishes a buyer's half-signed PSBT to the marketplace. Auth is twofold: a session " +
+            'token (X-Cat21-Session-* headers) proving control of `buyerOrdinalsAddress`, and the ' +
+            "buyer's SIGHASH_ALL signatures on inputs 1..N, verified cryptographically against the " +
+            'chain prevouts. ' +
             "One bid per (network, cat_txid, cat_vout, buyer_ordinals_address); a buyer re-bidding at a " +
             'new price overwrites their previous row atomically. Different buyers coexist on the same ' +
             'UTXO — that\'s the FOMO channel where competing bids drive the price up.\n\n' +
@@ -92,9 +101,10 @@ __decorate([
             '- `cats-bundle-drift` — UTXO carries a different cats set than signed for',
     }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __param(1, (0, cat21_session_guard_1.Cat21SessionAddress)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_bid_dto_1.CreateBidDto, Object]),
+    __metadata("design:paramtypes", [create_bid_dto_1.CreateBidDto, String, Object]),
     __metadata("design:returntype", Promise)
 ], BidsController.prototype, "create", null);
 __decorate([

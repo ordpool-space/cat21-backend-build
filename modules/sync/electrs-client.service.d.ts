@@ -10,4 +10,8 @@ export declare class ElectrsClientService {
     getOutpointStatus(txid: string, vout: number): Promise<OutpointStatus>;
     private txExists;
     isOutpointSpent(txid: string, vout: number): Promise<boolean>;
+    getPrevout(txid: string, vout: number): Promise<{
+        script: Uint8Array;
+        amountSats: number;
+    } | 'not-found' | 'unknown'>;
 }
