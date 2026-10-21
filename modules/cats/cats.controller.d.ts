@@ -9,6 +9,7 @@ export declare class CatsController {
     getStatus(): Promise<StatusDto>;
     getCatByNumber(catNumber: number, reply: FastifyReply): Promise<CatDto>;
     getCatByTxHash(txHash: string, reply: FastifyReply): Promise<CatDto>;
+    private loadCatSvgOrThrow;
     getCatSvg(catNumber: number, reply: FastifyReply): Promise<never>;
     getCatWebp(catNumber: number, reply: FastifyReply): Promise<never>;
     getCatSocialCard(catNumber: number, reply: FastifyReply): Promise<never>;

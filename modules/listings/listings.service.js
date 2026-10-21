@@ -16,6 +16,8 @@ const drizzle_orm_1 = require("drizzle-orm");
 const array_utils_1 = require("../shared/array-utils");
 const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
+const marketplace_errors_1 = require("../shared/marketplace-errors");
+const pagination_1 = require("../shared/pagination");
 const listings_1 = require("../shared/drizzle/schema/listings");
 const ord_client_service_1 = require("../sync/ord-client.service");
 let ListingsService = ListingsService_1 = class ListingsService {
@@ -51,18 +53,12 @@ let ListingsService = ListingsService_1 = class ListingsService {
         }
         catch (err) {
             this.logger.warn(`ord /output lookup failed for ${dto.catTxid}:${dto.catVout}: ${err instanceof Error ? err.message : err}`);
-            throw new common_1.BadRequestException({
-                code: 'ord-lookup-failed',
-                detail: 'On-chain cats-bundle check could not complete. Try again in a moment.',
-            });
+            (0, marketplace_errors_1.throwOrdLookupFailed)();
         }
         if (liveCats === null || liveCats.length === 0) {
-            throw new common_1.BadRequestException({
-                code: 'cat-not-found',
-                detail: `UTXO ${dto.catTxid}:${dto.catVout} carries no cats on ord (already spent, ` +
-                    `unknown, or never held a cat). If the cat just moved, re-sign against the ` +
-                    `new outpoint.`,
-            });
+            (0, marketplace_errors_1.throwCatNotFound)(`UTXO ${dto.catTxid}:${dto.catVout} carries no cats on ord (already spent, ` +
+                `unknown, or never held a cat). If the cat just moved, re-sign against the ` +
+                `new outpoint.`);
         }
         if (!(0, array_utils_1.catsArraysEqual)(liveCats, dto.cats)) {
             throw new common_1.BadRequestException({
@@ -172,13 +168,7 @@ let ListingsService = ListingsService_1 = class ListingsService {
         return this.rowToDto(rows[0]);
     }
     async findPaginated(itemsPerPage, currentPage) {
-        if (!Number.isInteger(itemsPerPage) || itemsPerPage < 1 || itemsPerPage > 100) {
-            throw new common_1.BadRequestException('itemsPerPage must be an integer in [1, 100]');
-        }
-        if (!Number.isInteger(currentPage) || currentPage < 1) {
-            throw new common_1.BadRequestException('currentPage must be a positive integer');
-        }
-        const offset = (currentPage - 1) * itemsPerPage;
+        const offset = (0, pagination_1.paginationOffset)(itemsPerPage, currentPage);
         const [rows, [{ total }]] = await Promise.all([
             this.drizzle.db
                 .select()

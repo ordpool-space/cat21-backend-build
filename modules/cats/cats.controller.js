@@ -71,12 +71,16 @@ let CatsController = class CatsController {
         reply.header('Cache-Control', cacheControlFor(cat));
         return cat;
     }
-    async getCatSvg(catNumber, reply) {
+    async loadCatSvgOrThrow(catNumber, reply) {
         const svg = await this.catsService.getCatSvg(catNumber);
         if (!svg) {
             reply.header('Cache-Control', 'no-store');
             throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
         }
+        return svg;
+    }
+    async getCatSvg(catNumber, reply) {
+        const svg = await this.loadCatSvgOrThrow(catNumber, reply);
         return reply
             .header('Cache-Control', IMMUTABLE_CACHE_CONTROL)
             .header('Content-Type', 'image/svg+xml')
@@ -84,11 +88,7 @@ let CatsController = class CatsController {
             .send(svg);
     }
     async getCatWebp(catNumber, reply) {
-        const svg = await this.catsService.getCatSvg(catNumber);
-        if (!svg) {
-            reply.header('Cache-Control', 'no-store');
-            throw new common_1.NotFoundException(`Cat #${catNumber} not found`);
-        }
+        const svg = await this.loadCatSvgOrThrow(catNumber, reply);
         try {
             const webp = await sharp(Buffer.from(svg))
                 .resize(440, 440)

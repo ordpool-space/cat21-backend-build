@@ -19,6 +19,8 @@ const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 const array_utils_1 = require("../shared/array-utils");
 const backend_network_1 = require("../shared/backend-network");
 const drizzle_service_1 = require("../shared/drizzle/drizzle.service");
+const marketplace_errors_1 = require("../shared/marketplace-errors");
+const pagination_1 = require("../shared/pagination");
 const bids_1 = require("../shared/drizzle/schema/bids");
 const electrs_client_service_1 = require("../sync/electrs-client.service");
 const ord_client_service_1 = require("../sync/ord-client.service");
@@ -109,11 +111,10 @@ let BidsService = BidsService_1 = class BidsService {
         }
         const prevouts = new Map();
         for (let i = 0; i < tx.inputsLength; i++) {
-            const inp = tx.getInput(i);
-            if (!inp.txid)
+            const op = this.inputOutpoint(tx, i);
+            if (!op)
                 continue;
-            const inpTxid = base_1.hex.encode(inp.txid);
-            const inpVout = inp.index ?? 0;
+            const { txid: inpTxid, vout: inpVout } = op;
             const pv = await this.electrsClient.getPrevout(inpTxid, inpVout);
             if (pv === 'not-found') {
                 throw new common_1.BadRequestException({
@@ -139,11 +140,10 @@ let BidsService = BidsService_1 = class BidsService {
             });
         }
         for (let i = 1; i < tx.inputsLength; i++) {
-            const inp = tx.getInput(i);
-            if (!inp.txid)
+            const op = this.inputOutpoint(tx, i);
+            if (!op)
                 continue;
-            const inpTxid = base_1.hex.encode(inp.txid);
-            const inpVout = inp.index ?? 0;
+            const { txid: inpTxid, vout: inpVout } = op;
             const status = await this.electrsClient.getOutpointStatus(inpTxid, inpVout);
             if (status === 'spent') {
                 throw new common_1.BadRequestException({
@@ -159,17 +159,11 @@ let BidsService = BidsService_1 = class BidsService {
         }
         catch (err) {
             this.logger.warn(`ord /output lookup failed for ${dto.catTxid}:${dto.catVout}: ${err instanceof Error ? err.message : err}`);
-            throw new common_1.BadRequestException({
-                code: 'ord-lookup-failed',
-                detail: 'On-chain cats-bundle check could not complete. Try again in a moment.',
-            });
+            (0, marketplace_errors_1.throwOrdLookupFailed)();
         }
         if (liveCats === null || liveCats.length === 0) {
-            throw new common_1.BadRequestException({
-                code: 'cat-not-found',
-                detail: `UTXO ${dto.catTxid}:${dto.catVout} carries no cats on ord (already spent, unknown, ` +
-                    'or never held a cat).',
-            });
+            (0, marketplace_errors_1.throwCatNotFound)(`UTXO ${dto.catTxid}:${dto.catVout} carries no cats on ord (already spent, unknown, ` +
+                'or never held a cat).');
         }
         if (!(0, array_utils_1.catsArraysEqual)(liveCats, dto.cats)) {
             throw new common_1.BadRequestException({
@@ -212,11 +206,20 @@ let BidsService = BidsService_1 = class BidsService {
         }
         return persisted;
     }
+    outpointPredicates(network, catTxid, catVout) {
+        return [(0, drizzle_orm_1.eq)(bids_1.bids.network, network), (0, drizzle_orm_1.eq)(bids_1.bids.catTxid, catTxid), (0, drizzle_orm_1.eq)(bids_1.bids.catVout, catVout)];
+    }
+    inputOutpoint(tx, i) {
+        const inp = tx.getInput(i);
+        if (!inp.txid)
+            return null;
+        return { txid: base_1.hex.encode(inp.txid), vout: inp.index ?? 0 };
+    }
     async findByOutpoint(network, catTxid, catVout) {
         const rows = await this.drizzle.db
             .select()
             .from(bids_1.bids)
-            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(bids_1.bids.network, network), (0, drizzle_orm_1.eq)(bids_1.bids.catTxid, catTxid), (0, drizzle_orm_1.eq)(bids_1.bids.catVout, catVout)))
+            .where((0, drizzle_orm_1.and)(...this.outpointPredicates(network, catTxid, catVout)))
             .orderBy((0, drizzle_orm_1.desc)(bids_1.bids.bidSats), (0, drizzle_orm_1.desc)(bids_1.bids.createdAt));
         return rows.map((r) => this.rowToDto(r));
     }
@@ -224,20 +227,14 @@ let BidsService = BidsService_1 = class BidsService {
         const rows = await this.drizzle.db
             .select()
             .from(bids_1.bids)
-            .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(bids_1.bids.network, network), (0, drizzle_orm_1.eq)(bids_1.bids.catTxid, catTxid), (0, drizzle_orm_1.eq)(bids_1.bids.catVout, catVout), (0, drizzle_orm_1.eq)(bids_1.bids.buyerOrdinalsAddress, buyerOrdinalsAddress)))
+            .where((0, drizzle_orm_1.and)(...this.outpointPredicates(network, catTxid, catVout), (0, drizzle_orm_1.eq)(bids_1.bids.buyerOrdinalsAddress, buyerOrdinalsAddress)))
             .limit(1);
         if (rows.length === 0)
             return null;
         return this.rowToDto(rows[0]);
     }
     async findPaginated(itemsPerPage, currentPage) {
-        if (!Number.isInteger(itemsPerPage) || itemsPerPage < 1 || itemsPerPage > 100) {
-            throw new common_1.BadRequestException('itemsPerPage must be an integer in [1, 100]');
-        }
-        if (!Number.isInteger(currentPage) || currentPage < 1) {
-            throw new common_1.BadRequestException('currentPage must be a positive integer');
-        }
-        const offset = (currentPage - 1) * itemsPerPage;
+        const offset = (0, pagination_1.paginationOffset)(itemsPerPage, currentPage);
         const [rows, [{ total }]] = await Promise.all([
             this.drizzle.db
                 .select()

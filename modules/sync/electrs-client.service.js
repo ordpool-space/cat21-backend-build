@@ -62,10 +62,9 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
         this.logger.warn(`electrs outspend unexpected shape for ${txid}:${vout}: ${JSON.stringify(body)}`);
         return 'unknown';
     }
-    async txExists(txid) {
-        let res;
+    async fetchTx(txid) {
         try {
-            res = await fetch(`${this.baseUrl}/tx/${txid}`, {
+            return await fetch(`${this.baseUrl}/tx/${txid}`, {
                 headers: { Accept: 'application/json' },
                 signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
             });
@@ -74,6 +73,11 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
             this.logger.warn(`electrs /tx fetch failed for ${txid}: ${err instanceof Error ? err.message : err}`);
             return 'unknown';
         }
+    }
+    async txExists(txid) {
+        const res = await this.fetchTx(txid);
+        if (res === 'unknown')
+            return 'unknown';
         if (res.status === 404)
             return 'missing';
         if (!res.ok) {
@@ -86,17 +90,9 @@ let ElectrsClientService = ElectrsClientService_1 = class ElectrsClientService {
         return (await this.getOutpointStatus(txid, vout)) === 'spent';
     }
     async getPrevout(txid, vout) {
-        let res;
-        try {
-            res = await fetch(`${this.baseUrl}/tx/${txid}`, {
-                headers: { Accept: 'application/json' },
-                signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-            });
-        }
-        catch (err) {
-            this.logger.warn(`electrs /tx fetch failed for ${txid}: ${err instanceof Error ? err.message : err}`);
+        const res = await this.fetchTx(txid);
+        if (res === 'unknown')
             return 'unknown';
-        }
         if (res.status === 404)
             return 'not-found';
         if (!res.ok) {

@@ -13,6 +13,8 @@ export declare class BidsService {
     constructor(drizzle: DrizzleService, ordClient: OrdClientService, electrsClient: ElectrsClientService);
     get network(): BackendNetworkString;
     create(dto: CreateBidDto): Promise<BidDto>;
+    private outpointPredicates;
+    private inputOutpoint;
     findByOutpoint(network: string, catTxid: string, catVout: number): Promise<BidDto[]>;
     findByOutpointAndBuyer(network: string, catTxid: string, catVout: number, buyerOrdinalsAddress: string): Promise<BidDto | null>;
     findPaginated(itemsPerPage: number, currentPage: number): Promise<PaginatedBidsDto>;
