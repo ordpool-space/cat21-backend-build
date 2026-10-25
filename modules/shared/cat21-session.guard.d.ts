@@ -4,3 +4,4 @@ export declare class Cat21SessionGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean;
 }
 export declare const Cat21SessionAddress: (...dataOrPipes: unknown[]) => ParameterDecorator;
+export declare function ApiSessionHeaders(): MethodDecorator & ClassDecorator;

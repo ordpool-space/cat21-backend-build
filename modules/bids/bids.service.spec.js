@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
 const btc = require("@scure/btc-signer");
 const testing_1 = require("ordpool-sdk/testing");
+const mysql_core_1 = require("drizzle-orm/mysql-core");
+const bids_1 = require("../shared/drizzle/schema/bids");
 const bids_service_1 = require("./bids.service");
 const REAL_TXID = 'ab49227cce490e2137872f7d08924187ee4f4bc7e8b3bda7ac63d7bba1d897df';
 const OTHER_TXID = 'ff'.repeat(32);
@@ -366,15 +368,21 @@ describe('BidsService.findPaginated — bounds', () => {
     });
 });
 describe('BidsService.deleteByOutpointAndBuyer', () => {
-    it('runs the delete query with the unique-key fields', async () => {
-        const where = jest.fn().mockResolvedValue(undefined);
+    it('deletes from bids filtering on ALL FOUR unique-key fields, buyer included', async () => {
+        let capturedWhere;
+        const where = jest.fn((cond) => {
+            capturedWhere = cond;
+            return Promise.resolve(undefined);
+        });
         const drizzle = createDrizzleMock({
             delete: jest.fn().mockReturnValue({ where }),
         });
         const service = new bids_service_1.BidsService(drizzle, createOrdMock(), createElectrsMock());
         await service.deleteByOutpointAndBuyer('mainnet', REAL_TXID, 0, BUYER_ORD_ADDR);
-        expect(drizzle.db.delete).toHaveBeenCalled();
-        expect(where).toHaveBeenCalled();
+        expect(drizzle.db.delete).toHaveBeenCalledWith(bids_1.bids);
+        expect(capturedWhere).toBeDefined();
+        const { params } = new mysql_core_1.MySqlDialect().sqlToQuery(capturedWhere);
+        expect(params).toEqual(['mainnet', REAL_TXID, 0, BUYER_ORD_ADDR]);
     });
 });
 function paginatedDrizzle(rows, total) {

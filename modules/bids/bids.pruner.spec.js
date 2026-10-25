@@ -154,7 +154,7 @@ describe('BidsPruner.runPrune — buyer-side (funding UTXO liveness)', () => {
         stubPsbt([FUND_TXID_LIVE]);
         const drizzle = drizzleWithRows([row()]);
         const ord = { getCatsAtOutput: jest.fn().mockResolvedValue([42]) };
-        const electrs = createElectrsMock();
+        const electrs = createElectrsMock({ [FUND_TXID_LIVE]: 'unknown' });
         const bidsSvc = { deleteByOutpointAndBuyer: jest.fn() };
         const pruner = new bids_pruner_1.BidsPruner(drizzle, ord, electrs, bidsSvc);
         await pruner.runPrune();

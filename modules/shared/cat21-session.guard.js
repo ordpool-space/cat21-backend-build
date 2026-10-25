@@ -8,7 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var Cat21SessionGuard_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Cat21SessionAddress = exports.Cat21SessionGuard = void 0;
+exports.ApiSessionHeaders = ApiSessionHeaders;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const cat21_session_1 = require("ordpool-sdk/cat21-session");
 const cat21_validation_1 = require("ordpool-sdk/cat21-validation");
 let Cat21SessionGuard = Cat21SessionGuard_1 = class Cat21SessionGuard {
@@ -57,6 +59,9 @@ exports.Cat21SessionAddress = (0, common_1.createParamDecorator)((_data, ctx) =>
     }
     return addr;
 });
+function ApiSessionHeaders() {
+    return (0, common_1.applyDecorators)((0, swagger_1.ApiHeader)({ name: 'X-Cat21-Session-Address', required: true, description: 'Ordinals address the caller controls (the BIP-322 signer).' }), (0, swagger_1.ApiHeader)({ name: 'X-Cat21-Session-Valid-Until', required: true, description: 'ISO-8601 expiry the signature commits to (at most 7 days out).' }), (0, swagger_1.ApiHeader)({ name: 'X-Cat21-Session-Signature', required: true, description: 'base64 BIP-322 signature over the canonical session message.' }));
+}
 function readHeader(req, name) {
     const v = req.headers[name];
     if (typeof v === 'string' && v.length > 0)

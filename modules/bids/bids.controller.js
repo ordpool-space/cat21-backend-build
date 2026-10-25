@@ -70,6 +70,7 @@ __decorate([
     (0, common_1.HttpCode)(201),
     (0, throttler_1.Throttle)({ default: { limit: 5, ttl: 60_000 } }),
     (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
+    (0, cat21_session_guard_1.ApiSessionHeaders)(),
     (0, swagger_1.ApiOperation)({
         summary: 'Post (or overwrite) a bid on a cat UTXO',
         description: "Publishes a buyer's half-signed PSBT to the marketplace. Auth is twofold: a session " +
@@ -146,6 +147,7 @@ __decorate([
     (0, common_1.Delete)('outpoint/:catTxid/:catVout'),
     (0, common_1.HttpCode)(204),
     (0, common_1.UseGuards)(cat21_session_guard_1.Cat21SessionGuard, throttler_1.ThrottlerGuard),
+    (0, cat21_session_guard_1.ApiSessionHeaders)(),
     (0, throttler_1.Throttle)({ default: { limit: 30, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({
         summary: 'Delete a bid (buyer cancels)',
