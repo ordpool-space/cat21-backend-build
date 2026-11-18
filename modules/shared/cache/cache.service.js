@@ -56,7 +56,9 @@ let CacheService = CacheService_1 = class CacheService {
         this.txHashToNumber = new Map();
         this.totalCatCount = 0;
         this.lastSyncedCatNumber = -1;
+        this.totalsKnown = false;
         this.proofOfCatWork = 0;
+        this.proofOfCatWorkKnown = false;
         this.memoryCheckTimer = null;
         this.catsByNumber = new lru_map_1.LruMap(DEFAULT_CAT_CAPACITY, {
             onEvict: (_key, cat) => this.txHashToNumber.delete(cat.txHash),
@@ -122,18 +124,21 @@ let CacheService = CacheService_1 = class CacheService {
     setTotals(total, lastSynced) {
         this.totalCatCount = total;
         this.lastSyncedCatNumber = lastSynced;
+        this.totalsKnown = true;
     }
     getProofOfCatWork() {
         return this.proofOfCatWork;
     }
     setProofOfCatWork(sumFromDb) {
         this.proofOfCatWork = sumFromDb;
+        this.proofOfCatWorkKnown = true;
     }
     onNewCatsSynced(newMax) {
         if (newMax > this.lastSyncedCatNumber) {
             this.lastSyncedCatNumber = newMax;
             this.totalCatCount = newMax + 1;
         }
+        this.totalsKnown = true;
     }
     getMemoryInfo() {
         const { rss, heapUsed, heapTotal } = process.memoryUsage();
@@ -167,9 +172,9 @@ let CacheService = CacheService_1 = class CacheService {
             cats: this.catsByNumber.size,
             catsMax: this.catsByNumber.getMaxSize(),
             txHashIndex: this.txHashToNumber.size,
-            totalCatCount: this.totalCatCount,
-            lastSyncedCatNumber: this.lastSyncedCatNumber,
-            proofOfCatWork: this.proofOfCatWork,
+            totalCatCount: this.totalsKnown ? this.totalCatCount : null,
+            lastSyncedCatNumber: this.totalsKnown ? this.lastSyncedCatNumber : null,
+            proofOfCatWork: this.proofOfCatWorkKnown ? this.proofOfCatWork : null,
             memoryLimitMB: Math.round(this.memoryLimit / 1024 / 1024),
             memoryTargetMB: Math.round(mem.targetMax / 1024 / 1024),
             memoryHeadroomMB: Math.round(mem.headroom / 1024 / 1024),

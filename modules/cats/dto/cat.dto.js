@@ -409,7 +409,7 @@ __decorate([
 ], StatusDto.prototype, "proofOfCatWork", void 0);
 class CacheStatsDto {
     static _OPENAPI_METADATA_FACTORY() {
-        return { cats: { required: true, type: () => Number }, catsMax: { required: true, type: () => Number }, txHashIndex: { required: true, type: () => Number }, totalCatCount: { required: true, type: () => Number }, lastSyncedCatNumber: { required: true, type: () => Number }, proofOfCatWork: { required: true, type: () => Number }, memoryLimitMB: { required: true, type: () => Number }, memoryTargetMB: { required: true, type: () => Number }, memoryHeadroomMB: { required: true, type: () => Number }, memoryRssMB: { required: true, type: () => Number }, memoryHeapUsedMB: { required: true, type: () => Number } };
+        return { cats: { required: true, type: () => Number }, catsMax: { required: true, type: () => Number }, txHashIndex: { required: true, type: () => Number }, totalCatCount: { required: true, type: () => Number, nullable: true }, lastSyncedCatNumber: { required: true, type: () => Number, nullable: true }, proofOfCatWork: { required: true, type: () => Number, nullable: true }, memoryLimitMB: { required: true, type: () => Number }, memoryTargetMB: { required: true, type: () => Number }, memoryHeadroomMB: { required: true, type: () => Number }, memoryRssMB: { required: true, type: () => Number }, memoryHeapUsedMB: { required: true, type: () => Number } };
     }
 }
 exports.CacheStatsDto = CacheStatsDto;
@@ -426,16 +426,16 @@ __decorate([
     __metadata("design:type", Number)
 ], CacheStatsDto.prototype, "txHashIndex", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Cached total cat count (maintained via auto-bump + sync notifications)', example: 63732 }),
-    __metadata("design:type", Number)
+    (0, swagger_1.ApiProperty)({ description: 'Cached total cat count (maintained via auto-bump + sync notifications). Null until the DB or the sync has supplied it (right after a restart, since this endpoint never queries the DB).', example: 63732, type: Number, nullable: true }),
+    __metadata("design:type", Object)
 ], CacheStatsDto.prototype, "totalCatCount", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Cached last synced cat number. Defines the newest-pinned range: [n-2399 .. n].', example: 63731 }),
-    __metadata("design:type", Number)
+    (0, swagger_1.ApiProperty)({ description: 'Cached last synced cat number. Defines the newest-pinned range: [n-2399 .. n]. Null until the DB or the sync has supplied it.', example: 63731, type: Number, nullable: true }),
+    __metadata("design:type", Object)
 ], CacheStatsDto.prototype, "lastSyncedCatNumber", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Cached Proof of Cat Work (sum of all mint fees in sats). Refreshed from DB after each sync cycle.', example: 5234876543 }),
-    __metadata("design:type", Number)
+    (0, swagger_1.ApiProperty)({ description: 'Cached Proof of Cat Work (sum of all mint fees in sats). Refreshed from DB after each sync cycle. Null until the DB has supplied it.', example: 5234876543, type: Number, nullable: true }),
+    __metadata("design:type", Object)
 ], CacheStatsDto.prototype, "proofOfCatWork", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Detected container memory limit in MB (cgroup v2/v1, Node 20+ constrainedMemory, or fallback)', example: 512 }),

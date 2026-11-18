@@ -7,7 +7,9 @@ export declare class CacheService implements OnModuleInit, OnModuleDestroy {
     private readonly txHashToNumber;
     private totalCatCount;
     private lastSyncedCatNumber;
+    private totalsKnown;
     private proofOfCatWork;
+    private proofOfCatWorkKnown;
     private memoryCheckTimer;
     constructor();
     onModuleInit(): void;
@@ -31,9 +33,9 @@ export declare class CacheService implements OnModuleInit, OnModuleDestroy {
         cats: number;
         catsMax: number;
         txHashIndex: number;
-        totalCatCount: number;
-        lastSyncedCatNumber: number;
-        proofOfCatWork: number;
+        totalCatCount: number | null;
+        lastSyncedCatNumber: number | null;
+        proofOfCatWork: number | null;
         memoryLimitMB: number;
         memoryTargetMB: number;
         memoryHeadroomMB: number;

@@ -78,9 +78,9 @@ export declare class CacheStatsDto {
     cats: number;
     catsMax: number;
     txHashIndex: number;
-    totalCatCount: number;
-    lastSyncedCatNumber: number;
-    proofOfCatWork: number;
+    totalCatCount: number | null;
+    lastSyncedCatNumber: number | null;
+    proofOfCatWork: number | null;
     memoryLimitMB: number;
     memoryTargetMB: number;
     memoryHeadroomMB: number;
