@@ -76,7 +76,7 @@ describe('BidsPruner.runPrune — seller-side (cat UTXO drift)', () => {
         expect(ord.getCatsAtOutput).toHaveBeenCalledTimes(1);
         expect(electrs.getOutpointStatus).toHaveBeenCalledTimes(1);
     });
-    it('drops on seller-side when the UTXO no longer holds cats (skips buyer-side check)', async () => {
+    it('drops on seller-side when the UTXO no longer holds cats, e.g. after a sale (skips buyer-side check)', async () => {
         const drizzle = drizzleWithRows([row()]);
         const ord = { getCatsAtOutput: jest.fn().mockResolvedValue(null) };
         const electrs = createElectrsMock();
