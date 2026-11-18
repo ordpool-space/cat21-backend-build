@@ -130,7 +130,7 @@ __decorate([
     __metadata("design:type", String)
 ], CatSearchQueryDto.prototype, "color", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Origin: genesis (the 1-of-1 cat #0) or normal (everything else).', example: 'genesis' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Origin: genesis (genesis-palette cats, catHash[0] === 79, ~0.4% of the collection) or normal (everything else).', example: 'genesis' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(FILTER_MAX_LENGTH),
